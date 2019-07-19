@@ -261,7 +261,3 @@ processors = {
 output_modes = {
     "fn": "classification",
 }
-
-NUM_LABELS = {
-    "fn": 3,
-}
