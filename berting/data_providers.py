@@ -70,7 +70,7 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return ["0", "1", "2"]
+        return [0, 1, 2]
 
     def _create_examples(self, data_dir, file_name):
         """Creates examples for the training and dev sets."""
