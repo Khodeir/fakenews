@@ -5,7 +5,7 @@ import sys
 from io import open
 
 from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import matthews_corrcoef, f1_score
+from sklearn.metrics import matthews_corrcoef, f1_score, precision_score, recall_score
 
 logger = logging.getLogger(__name__)
 
@@ -230,9 +230,20 @@ def simple_accuracy(preds, labels):
 def acc_and_f1(preds, labels):
     acc = simple_accuracy(preds, labels)
     f1 = f1_score(y_true=labels, y_pred=preds, average=None)
+    precision = precision_score(y_true=labels, y_pred=preds, average=None)
+    recall = recall_score(y_true=labels, y_pred=preds, average=None)
     return {
         "acc": acc,
-        "f1": f1,
+        "f1_0": f1[0],
+        "f1_1": f1[1],
+        "f1_2": f1[2],
+        "precision_0": precision[0],
+        "precision_1": precision[1],
+        "precision_2": precision[2],
+        "recall_0": recall[0],
+        "recall_1": recall[1],
+        "recall_2": recall[2],
+
     }
 
 
