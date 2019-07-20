@@ -250,7 +250,7 @@ def pearson_and_spearman(preds, labels):
 def compute_metrics(task_name, preds, labels):
     assert len(preds) == len(labels)
     if task_name == "fn":
-        return {"acc": simple_accuracy(preds, labels)}
+        return acc_and_f1(preds, labels)
     else:
         raise KeyError(task_name)
 
