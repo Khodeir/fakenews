@@ -230,6 +230,7 @@ def simple_accuracy(preds, labels):
 def acc_and_f1(preds, labels):
     acc = simple_accuracy(preds, labels)
     f1 = f1_score(y_true=labels, y_pred=preds, average=None)
+    macro_avg_f1 = f1_score(y_true=labels, y_pred=preds, average='macro')
     precision = precision_score(y_true=labels, y_pred=preds, average=None)
     recall = recall_score(y_true=labels, y_pred=preds, average=None)
     return {
@@ -243,6 +244,7 @@ def acc_and_f1(preds, labels):
         "recall_0": recall[0],
         "recall_1": recall[1],
         "recall_2": recall[2],
+        "macro_avg_f1": macro_avg_f1
 
     }
 
