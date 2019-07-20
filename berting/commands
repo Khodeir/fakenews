@@ -3,9 +3,8 @@ python run_lang_model.py \
 --model_type=bert \
 --model_name_or_path=bert-base-cased \
 --task_name=fn \
---output_dir=~/results/bert_entailment_v1 \
+--output_dir=~/results/bert_base_512 \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
---do_lower_case=false \
 --gradient_accumulation_steps=5 \
