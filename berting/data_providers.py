@@ -229,11 +229,10 @@ def simple_accuracy(preds, labels):
 
 def acc_and_f1(preds, labels):
     acc = simple_accuracy(preds, labels)
-    f1 = f1_score(y_true=labels, y_pred=preds)
+    f1 = f1_score(y_true=labels, y_pred=preds, average=None)
     return {
         "acc": acc,
         "f1": f1,
-        "acc_and_f1": (acc + f1) / 2,
     }
 
 
