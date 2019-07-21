@@ -3,7 +3,7 @@ python run_lang_model.py \
 --model_type=bert \
 --model_name_or_path=bert-base-cased \
 --task_name=fn \
---output_dir=/home/ubuntu/results/bert_base_512 \
+--output_dir=/home/ubuntu/results/duplicated_512_5e-5 \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -12,9 +12,9 @@ python run_lang_model.py \
 --overwrite_output_dir \
 --per_gpu_train_batch_size=8 \
 --per_gpu_eval_batch_size=8 \
---num_train_epochs=1.0 \
+--num_train_epochs=3.0 \
 --logging_steps=25 \
---learning_rate=5e-4 \
---run_name=runs/bert_base_512_lr5e-4
+--learning_rate=5e-5 \
+--run_name=runs/duplicated_512_5e-5
 
 
