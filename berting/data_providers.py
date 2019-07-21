@@ -228,8 +228,11 @@ def simple_accuracy(preds, labels):
 
 
 def acc_and_f1(preds, labels):
+    print(f'Preds are {preds}')
+    print(f'Labels are {labels}')
     acc = simple_accuracy(preds, labels)
     f1 = f1_score(y_true=labels, y_pred=preds, average=None)
+    print(f'f1 is {f1}')
     macro_avg_f1 = f1_score(y_true=labels, y_pred=preds, average='macro')
     precision = precision_score(y_true=labels, y_pred=preds, average=None)
     recall = recall_score(y_true=labels, y_pred=preds, average=None)
