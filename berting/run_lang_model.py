@@ -135,6 +135,7 @@ def train(args, train_dataset, model, tokenizer):
                     preds = np.argmax(preds, axis=1)
                 elif args.output_mode == "regression":
                     preds = np.squeeze(preds)
+                print(f'DEBUG: ##################>>>>> labels are {out_label_ids}')
                 results = compute_metrics(args.task_name, preds, out_label_ids)
                 for key, value in results.items():
                     tb_writer.add_scalar('train_{}'.format(key), value, global_step)
