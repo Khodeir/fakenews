@@ -22,7 +22,7 @@ from pytorch_transformers import (WEIGHTS_NAME, BertConfig,
 from pytorch_transformers import AdamW, WarmupLinearSchedule
 
 from data_providers import (compute_metrics, convert_examples_to_features,
-                        output_modes, processors)
+                            output_modes, processors)
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,8 @@ def train(args, train_dataset, model, tokenizer):
     set_seed(args)  # Added here for reproductibility (even between python 2 and 3)
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
+        preds = None
+        out_label_ids = None
         for step, batch in enumerate(epoch_iterator):
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
@@ -98,7 +100,7 @@ def train(args, train_dataset, model, tokenizer):
                       'token_type_ids': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
                       'labels':         batch[3]}
             ouputs = model(**inputs)
-            loss = ouputs[0]  # model outputs are always tuple in pytorch-transformers (see doc)
+            loss, logits = ouputs[:2]  # model outputs are always tuple in pytorch-transformers (see doc)
 
             if args.n_gpu > 1:
                 loss = loss.mean() # mean() to average on multi-gpu parallel training
@@ -114,11 +116,30 @@ def train(args, train_dataset, model, tokenizer):
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
             tr_loss += loss.item()
+            
+            ### training evaluation
+            if preds is None:
+                preds = logits.detach().cpu().numpy()
+                out_label_ids = inputs['labels'].detach().cpu().numpy()
+            else:
+                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+                out_label_ids = np.append(out_label_ids, inputs['labels'].detach().cpu().numpy(), axis=0)
+            
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 scheduler.step()  # Update learning rate schedule
                 optimizer.step()
                 model.zero_grad()
                 global_step += 1
+
+                if args.output_mode == "classification":
+                    preds = np.argmax(preds, axis=1)
+                elif args.output_mode == "regression":
+                    preds = np.squeeze(preds)
+                results = compute_metrics(args.task_name, preds, out_label_ids)
+                for key, value in results.items():
+                    tb_writer.add_scalar('train_{}'.format(key), value, global_step)
+                preds = None
+                out_label_ids = None
 
                 if args.local_rank in [-1, 0] and args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     # Log metrics
