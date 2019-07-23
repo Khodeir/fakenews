@@ -5,6 +5,7 @@ import os
 import random
 
 import numpy as np
+import pandas as pd
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
@@ -192,7 +193,7 @@ def evaluate(args, model, tokenizer, prefix=""):
         eval_dataloader = DataLoader(eval_dataset, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
         # Eval!
-        logger.info("***** Running evaluation {} *****".format(prefix))
+        logger.info("***** Running test {} *****".format(prefix))
         logger.info("  Num examples = %d", len(eval_dataset))
         logger.info("  Batch size = %d", args.eval_batch_size)
         eval_loss = 0.0
@@ -238,22 +239,13 @@ def evaluate(args, model, tokenizer, prefix=""):
     return results
 
 
-def load_and_cache_examples(args, task, tokenizer, evaluate=False):
+def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
-    cached_features_file = os.path.join(args.data_dir, 'cached_{}_{}_{}_{}'.format(
-        'dev' if evaluate else 'train',
-        list(filter(None, args.model_name_or_path.split('/'))).pop(),
-        str(args.max_seq_length),
-        str(task)))
-    if os.path.exists(cached_features_file):
-        logger.info("Loading features from cached file %s", cached_features_file)
-        features = torch.load(cached_features_file)
-    else:
-        logger.info("Creating features from dataset file at %s", args.data_dir)
+    if test:
         label_list = processor.get_labels()
-        examples = processor.get_dev_examples(args.data_dir) if evaluate else processor.get_train_examples(args.data_dir)
+        examples = processor.get_test_examples(args.data_dir)
         features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
             cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
             cls_token=tokenizer.cls_token,
@@ -261,9 +253,29 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
             cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
             pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
             pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
-        if args.local_rank in [-1, 0]:
-            logger.info("Saving features into cached file %s", cached_features_file)
-            torch.save(features, cached_features_file)
+    else:
+        cached_features_file = os.path.join(args.data_dir, 'cached_{}_{}_{}_{}'.format(
+            'dev' if evaluate else 'train',
+            list(filter(None, args.model_name_or_path.split('/'))).pop(),
+            str(args.max_seq_length),
+            str(task)))
+        if os.path.exists(cached_features_file):
+            logger.info("Loading features from cached file %s", cached_features_file)
+            features = torch.load(cached_features_file)
+        else:
+            logger.info("Creating features from dataset file at %s", args.data_dir)
+            label_list = processor.get_labels()
+            examples = processor.get_dev_examples(args.data_dir) if evaluate else processor.get_train_examples(args.data_dir)
+            features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
+                cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
+                cls_token=tokenizer.cls_token,
+                sep_token=tokenizer.sep_token,
+                cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
+                pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
+                pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
+            if args.local_rank in [-1, 0]:
+                logger.info("Saving features into cached file %s", cached_features_file)
+                torch.save(features, cached_features_file)
 
     # Convert to Tensors and build dataset
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
@@ -273,8 +285,9 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
         all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.float)
+    all_guids = torch.tensor([f.guid for f in features], dtype=torch.long)
 
-    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_guids)
     return dataset
 
 
@@ -307,14 +320,16 @@ def main():
                         help="Whether to run training.")
     parser.add_argument("--do_eval", action='store_true',
                         help="Whether to run eval on the dev set.")
+    parser.add_argument("--do_test", action='store_true',
+                        help="Whether to run model on the test set.")
     parser.add_argument("--evaluate_during_training", action='store_true',
                         help="Rul evaluation during training at each logging step.")
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
 
-    parser.add_argument("--per_gpu_train_batch_size", default=6, type=int,
+    parser.add_argument("--per_gpu_train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
-    parser.add_argument("--per_gpu_eval_batch_size", default=6, type=int,
+    parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for evaluation.")
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                         help="Number of updates steps to accumulate before performing a backward/update pass.")
@@ -337,8 +352,6 @@ def main():
                         help="Log every X updates steps.")
     parser.add_argument('--save_steps', type=int, default=50,
                         help="Save checkpoint every X updates steps.")
-    parser.add_argument("--eval_all_checkpoints", action='store_true',
-                        help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number")
     parser.add_argument("--no_cuda", action='store_true',
                         help="Avoid using CUDA when available")
     parser.add_argument('--overwrite_output_dir', action='store_true',
@@ -455,23 +468,54 @@ def main():
         model.to(args.device)
 
 
-    # Evaluation
-    results = {}
-    if args.do_eval and args.local_rank in [-1, 0]:
-        checkpoints = [args.output_dir]
-        if args.eval_all_checkpoints:
-            checkpoints = list(os.path.dirname(c) for c in sorted(glob.glob(args.output_dir + '/**/' + WEIGHTS_NAME, recursive=True)))
-            logging.getLogger("pytorch_transformers.modeling_utils").setLevel(logging.WARN)  # Reduce logging
-        logger.info("Evaluate the following checkpoints: %s", checkpoints)
-        for checkpoint in checkpoints:
-            global_step = checkpoint.split('-')[-1] if len(checkpoints) > 1 else ""
-            model = model_class.from_pretrained(checkpoint)
-            model.to(args.device)
-            result = evaluate(args, model, tokenizer, prefix=global_step)
-            result = dict((k + '_{}'.format(global_step), v) for k, v in result.items())
-            results.update(result)
+    # Testing
+    if args.do_test and args.local_rank in [-1, 0]:
+        model = model_class.from_pretrained(args.output_dir)
+        model.to(args.device)
 
-    return results
+        test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, test=True)
+
+        args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+        # Note that DistributedSampler samples randomly
+        test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
+        test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=args.eval_batch_size)
+
+        # Test!
+        logger.info("***** Running test *****"
+        logger.info("  Num examples = %d", len(test_dataset))
+        logger.info("  Batch size = %d", args.eval_batch_size)
+
+        results = []
+        for batch in tqdm(test_dataloader, desc="Testing"):
+            model.eval()
+            batch = tuple(t.to(args.device) for t in batch)
+
+            with torch.no_grad():
+                inputs = {'input_ids':      batch[0],
+                          'attention_mask': batch[1],
+                          'token_type_ids': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
+                         }
+                outputs = model(**inputs)
+                logits = outputs[0]
+
+            logits = logits.detach().cpu().numpy()
+            claim_ids = batch[4].detach().cpu().numpy()
+            assert len(logits) == len(claim_ids)
+            for claim_id, logits_ex in zip(claim_ids, logits):
+                if args.output_mode == "classification":
+                    pred = np.argmax(logits_ex)
+                elif args.output_mode == "regression":
+                    pred = np.squeeze(logits_ex)
+                row = {
+                    'claim_id':  claim_id,
+                    'logits': logits_ex,
+                    'pred': pred
+                }
+                results.append(row)
+
+        output_test_file = os.path.join(args.output_dir, "test_results.csv")
+        df = pd.DataFrame(results)
+        df.to_csv(output_test_file, index=False)
 
 
 if __name__ == "__main__":

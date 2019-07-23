@@ -34,11 +34,12 @@ class InputExample(object):
 class InputFeatures(object):
     """A single set of features of data."""
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id):
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, guid):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_id = label_id
+        self.guid = guid
 
 
 class DataProcessor(object):
@@ -67,6 +68,10 @@ class FakeNewsProcessor(DataProcessor):
     def get_dev_examples(self, data_dir):
         """See base class."""
         return self._create_examples(data_dir, "dev_split.json")
+    
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(data_dir, "train_split.json")
 
     def get_labels(self):
         """See base class."""
@@ -199,10 +204,11 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
             logger.info("label: %s (id = %d)" % (example.label, label_id))
 
         features.append(
-                InputFeatures(input_ids=input_ids,
-                              input_mask=input_mask,
-                              segment_ids=segment_ids,
-                              label_id=label_id))
+            InputFeatures(input_ids=input_ids,
+                          input_mask=input_mask,
+                          segment_ids=segment_ids,
+                          label_id=label_id,
+                          guid=example.guid))
     return features
 
 
