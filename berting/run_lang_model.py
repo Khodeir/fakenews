@@ -250,7 +250,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
             cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
             cls_token=tokenizer.cls_token,
             sep_token=tokenizer.sep_token,
-            cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
+            cls_token_segment_id=2 if args.model_type in ['xlnet'] else 0,
             pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
             pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
     else:
@@ -270,7 +270,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
                 cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
                 cls_token=tokenizer.cls_token,
                 sep_token=tokenizer.sep_token,
-                cls_token_segment_id=2 if args.model_type in ['xlnet'] else 1,
+                cls_token_segment_id=2 if args.model_type in ['xlnet'] else 0,
                 pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
                 pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
             if args.local_rank in [-1, 0]:
@@ -481,7 +481,7 @@ def main():
         test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=args.eval_batch_size)
 
         # Test!
-        logger.info("***** Running test *****"
+        logger.info("***** Running test *****")
         logger.info("  Num examples = %d", len(test_dataset))
         logger.info("  Batch size = %d", args.eval_batch_size)
 
