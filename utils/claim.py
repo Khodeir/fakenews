@@ -1,4 +1,13 @@
+import os
+import json
+
 DATA_DIR = 'data/train'
+
+def load_data():
+    with open(os.path.join(DATA_DIR, 'train.json'), 'r') as json_fp:
+        data = json.load(json_fp)
+    return data
+
 class Claim:
     _related_articles_text = None
     @classmethod
