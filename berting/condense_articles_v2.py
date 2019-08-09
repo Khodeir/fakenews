@@ -51,8 +51,26 @@ for idx, row in df.iterrows():
         text = get_article_txt(article_id, also_print=False)
         doc = spacy_nlp(text)
         for i, token in enumerate(doc.sents):
-            if len(token.text) > 20:
+            if len(token.text) > 25:
                 examples.append(InputExample(guid=article_id, text_a=claim, text_b=token.text, label=0))
+    
+    if len(examples) == 0:
+        
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top20_txt.txt', 'w+') as f:
+            f.write('placeholder')
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top20_scores.txt', 'w+') as f:
+            f.write('placeholder')
+        
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v2b/{claim_id}_top20_txt.txt', 'w+') as f:
+            f.write('placeholder')
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v2b/{claim_id}_top20_scores.txt', 'w+') as f:
+            f.write('placeholder')
+        
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v3/{claim_id}_top6_txt.txt', 'w+') as f:
+            f.write('placeholder')
+        with open(f'/home/ubuntu/fakenews/data/train/condensed_v3/{claim_id}_top6_scores.txt', 'w+') as f:
+            f.write('placeholder')
+    
     
     features = convert_examples_to_features(examples, [None], 128, tokenizer, 'regression',
             cls_token_at_end=False,            # xlnet has a cls token at the end
@@ -92,16 +110,65 @@ for idx, row in df.iterrows():
     
     assert len(preds) == len(examples)
     flattened = preds.flatten()
-    if len(flattened) > 50:
-        indices = np.argpartition(flattened, -50)[-50:]
+    if len(flattened) > 21:
+        indices = list(np.argpartition(flattened, -21)[-21:])
     else:
         indices = list(range(len(flattened)))
-    filtered = [idx for idx in sorted(indices) if flattened[idx] > 1.5 and flattened[idx] < 3.5]
+    top = np.argmax(flattened)
+    if flattened[top] > 3.5:
+        indices.remove(top)
+    
+    filtered = sorted(indices)
     
     condensed_txt = '\n'.join([examples[idx].text_b for idx in filtered])
     condensed_scores = '\n'.join([str(flattened[idx]) for idx in filtered])
         
-    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top50_txt.txt', 'w+') as f:
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top20_txt.txt', 'w+') as f:
         f.write(condensed_txt)
-    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top50_scores.txt', 'w+') as f:
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2/{claim_id}_top20_scores.txt', 'w+') as f:
+        f.write(condensed_scores)
+    
+    # second version
+    if len(flattened) > 21:
+        indices = list(np.argpartition(flattened, -21)[-21:])
+    else:
+        indices = list(range(len(flattened)))
+    
+    filtered = sorted([idx for idx in indices if flattened[idx] < 3.5])
+    
+    
+    condensed_txt = '\n'.join([examples[idx].text_b for idx in filtered])
+    condensed_scores = '\n'.join([str(flattened[idx]) for idx in filtered])
+        
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2b/{claim_id}_top20_txt.txt', 'w+') as f:
+        f.write(condensed_txt)
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v2b/{claim_id}_top20_scores.txt', 'w+') as f:
+        f.write(condensed_scores)
+    
+    # thrid version --- top 6 with context
+    if len(flattened) > 7:
+        indices = list(np.argpartition(flattened, -7)[-7:])
+    else:
+        indices = list(range(len(flattened)))
+    # top = np.argmax(flattened)
+    if flattened[top] > 3.5:
+        indices.remove(top)
+        
+    filtered = []
+    
+    for idx in indices:
+        if idx-1 >= 0:
+            filtered.append(idx-1)
+        filtered.append(idx)    
+        if idx+1 <= len(examples)-1:
+            filtered.append(idx+1)
+    
+    filtered = sorted(list(set(filtered)))
+    
+    condensed_txt = '\n'.join([examples[idx].text_b for idx in filtered])
+    condensed_scores = '\n'.join([str(flattened[idx]) for idx in filtered])
+        
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v3/{claim_id}_top6_txt.txt', 'w+') as f:
+        f.write(condensed_txt)
+    with open(f'/home/ubuntu/fakenews/data/train/condensed_v3/{claim_id}_top6_scores.txt', 'w+') as f:
         f.write(condensed_scores)
