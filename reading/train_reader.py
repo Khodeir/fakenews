@@ -1,21 +1,61 @@
-from build_vocab import load_embeddings, load_vocab
+import torch
+from torch.utils.data import DataLoader
+from reading.data import ClaimDataset
+from reading.model import AttentiveClassifier
+from reading.build_vocab import load_embeddings
+from tensorboardX import SummaryWriter
 
+writer = SummaryWriter('models/reader_debug')
 embeddings = load_embeddings()
-vocab_size, embedding_dim = embeddings.shape
-vocab = {word: index for index, word in enumerate(load_vocab())}
-assert len(vocab) == vocab_size
 
-token_pattern = re.compile(r"(?u)\b\w\w+\b")
-tokenizer = lambda doc: token_pattern.findall(doc)
+# TODO: somehow truncate or limit size of related docs
+# Or maybe pass them as a list and iteratively compute classifications
+dataset = ClaimDataset(
+    data_path='data/train/train.json'
+)
 
-def preprocess(doc):
-	return [vocab.get(token, 0) for token in tokenizer(doc.lower())]
+# TODO: add padding to support bigger batches
+train_data = DataLoader(
+    dataset, batch_size=1
+)
 
-def data_iterator():
-	data = load_data()
-	for obj in data:
-		claim = Claim.from_json_object(obj)
-		yield claim
+model = AttentiveClassifier(
+    num_classes=3,
+    vocab_size=embeddings.shape[0],
+    embedding_dim=embeddings.shape[1],
+    initial_embeddings=torch.as_tensor(embeddings, dtype=torch.float),
+    hidden_dim=100,
+    lstm_layers=1,
+    lstm_bidirectional=True
+)
 
-preprocessed_arrays = 
+optimizer = torch.optim.Adam(
+    model.parameters(), lr=0.001, weight_decay=0
+)
 
+# TODO: add weights to offset class imbalance
+criterion = torch.nn.CrossEntropyLoss()
+
+num_epochs = 10
+num_iters = 0
+for epoch in range(num_epochs):
+    for (
+        (claim_text, document_text),
+        label,
+    ) in train_data:
+        _, class_logits = model(
+            claim_text,
+            document_text
+        )
+        loss = criterion(class_logits, label)
+        print(loss)
+
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
+        optimizer.step()
+        num_iters += 1
+
+        if writer is not None:
+            writer.add_scalar(
+                "loss", loss, num_iters
+            )
