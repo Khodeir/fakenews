@@ -26,7 +26,7 @@ class ClaimDataset(Dataset):
         claim = Claim.from_json_object(self._data[idx])
         claim_text_preprocessed = self.preprocess(claim.claim)
         claim_articles = claim.related_articles_text[::]
-        claim_articles = np.random.choice(claim_articles, min(len(claim_articles), self._max_num_articles))
+        claim_articles = np.random.choice(claim_articles, min(len(claim_articles), self._max_num_articles), replace=False)
         num_articles = len(claim_articles)
         words_left = self._max_words_total
         claim_articles_preprocessed = []
