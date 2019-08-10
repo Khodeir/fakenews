@@ -89,7 +89,7 @@ class FakeNewsProcessor(DataProcessor):
             
             articles_condensed_path = os.path.join(
                 data_dir,
-                f'condensed_v2/{claim_id}_top20_txt.txt')
+                f'condensed_v3/{claim_id}_top6_txt.txt')
             with open(articles_condensed_path) as f:
                 txt = f.read()
 
