@@ -11,13 +11,19 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-
+import argparse
 from pytorch_transformers import (WEIGHTS_NAME, BertConfig,
                                   BertForSequenceClassification, BertTokenizer,
                                   XLMConfig, XLMForSequenceClassification,
                                   XLMTokenizer, XLNetConfig,
                                   XLNetForSequenceClassification,
                                   XLNetTokenizer)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_file", default=None, type=str, required=True,
+                    help="Path to json file with claim id, claim, and article ids.")
+args = parser.parse_args()
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
@@ -32,7 +38,7 @@ model = model_class.from_pretrained('/home/ubuntu/results/bert_base_uncased_sts-
 model.eval()
 model = model.to('cuda')
 
-df = pd.read_json('/home/ubuntu/fakenews/data/train/train.json')
+df = pd.read_json(args.data_file)
 
 def get_article_txt(did, also_print=False):
     with open(f'/home/ubuntu/fakenews/data/train/train_articles/{did}.txt') as f:
