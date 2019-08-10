@@ -50,9 +50,9 @@ class AttentiveReader(nn.Module):
         self.attention = BiLinearAttention(input_size=self.output_dim)
 
     def forward(self, question, document):
-        question_embedding = self.word_embeddings(question).transpose(1, 0)
-        document_embedding = self.word_embeddings(document).transpose(1, 0)
-        # print('embedding sizes', question_embedding.shape, document_embedding.shape)
+        question_embedding = self.word_embeddings(question)
+        document_embedding = self.word_embeddings(document)
+        print('embedding sizes', question_embedding.shape, document_embedding.shape)
 
         # TODO: Maybe i only need the last states of the lstm
         question_encoding, _ = self.question_lstm(question_embedding)
@@ -92,3 +92,5 @@ if __name__ == '__main__':
     document_batch = torch.randint(0, 100, (4, 200))
     out, logits = m(question_batch, document_batch)
     assert out.shape[0] == 4 and out.shape[1] == 3 and len(out.shape) == 2, "Got shape {}".format(out.shape)
+
+
