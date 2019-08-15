@@ -245,7 +245,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
     # Load data features from cache or dataset file
     if test:
         label_list = processor.get_labels()
-        examples = processor.get_test_examples(args.data_dir)
+        examples = processor.get_dev_examples(args.data_dir)
         features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
             cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
             cls_token=tokenizer.cls_token,

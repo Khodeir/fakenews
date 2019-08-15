@@ -29,8 +29,10 @@ parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', 
                     help="File path for output file.")
 parser.add_argument("--do_lower_case", action='store_true',
                     help="Set this flag if you are using an uncased model.")
-parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int,
+parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int, required=True,
                     help="Batch size per GPU/CPU for evaluation.")
+parser.add_argument("--model_type", default='bert', type=str, required=True,
+                    help="Model type.")
 
 args = parser.parse_args()
 
@@ -145,7 +147,7 @@ def load_and_cache_examples(args, task, tokenizer):
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
     label_list = processor.get_labels()
-    examples = processor.get_inference_examples(args.data_dir)
+    examples = processor.get_test_examples(args.data_file, args.save_dir)
     features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
         cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
         cls_token=tokenizer.cls_token,
