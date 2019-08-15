@@ -14,6 +14,7 @@ COPY /home/ubuntu/results/condensed_v2_base_dup_2e-5 /usr/src/models/condensed_v
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
+RUN python -m spacy download en_core_web_md
 
 # Define environment variable
 ENV NAME fakenews
