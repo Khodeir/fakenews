@@ -19,15 +19,18 @@ from pytorch_transformers import (BertConfig,
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_file", default='/usr/local/dataset/metadata.json', type=str, required=True,
                     help="Path to json file with claim id, claim, and article ids.")
-parser.add_argument("--model_dir", default='/usr/local/models', type=str, required=True,
+parser.add_argument("--model_dir", default='/usr/src/models', type=str, required=True,
                     help="Path to pretrained model.")
 parser.add_argument("--article_dir", default='/usr/local/dataset/articles', type=str, required=True,
                     help="Path to dir for articles.")
-parser.add_argument("--save_dir", default='/usr/local/dataset/condensed_articles', type=str, required=True,
+parser.add_argument("--save_dir", default='/usr/src/condensed_articles', type=str, required=True,
                     help="Path to dir for saving.")
+parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=True,
+                    help="File path for output file.")
 parser.add_argument("--do_lower_case", action='store_true',
-                        help="Set this flag if you are using an uncased model.")
-
+                    help="Set this flag if you are using an uncased model.")
+parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int,
+                    help="Batch size per GPU/CPU for evaluation.")
 
 args = parser.parse_args()
 
@@ -137,7 +140,7 @@ model = model_class.from_pretrained(f'{args.model_dir}/condensed_v2_base_dup_2e-
 model.eval()
 model = model.to('cuda')
 
-def load_and_cache_examples(args, task, tokenizer, evaluate=False):
+def load_and_cache_examples(args, task, tokenizer):
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
@@ -168,13 +171,13 @@ test_dataset = load_and_cache_examples(args, args.task_name, tokenizer)
 
 args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
 # Note that DistributedSampler samples randomly
-test_sampler = SequentialSampler(test_dataset) if args.local_rank == -1 else DistributedSampler(test_dataset)
+test_sampler = SequentialSampler(test_dataset)
 test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=args.eval_batch_size)
 
 # Test!
-logger.info("***** Running test *****")
-logger.info("  Num examples = %d", len(test_dataset))
-logger.info("  Batch size = %d", args.eval_batch_size)
+print("***** Running test *****")
+print("  Num examples = %d", len(test_dataset))
+print("  Batch size = %d", args.eval_batch_size)
 
 results = []
 for batch in tqdm(test_dataloader, desc="Testing"):
@@ -183,9 +186,9 @@ for batch in tqdm(test_dataloader, desc="Testing"):
 
     with torch.no_grad():
         inputs = {'input_ids':      batch[0],
-                    'attention_mask': batch[1],
-                    'token_type_ids': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids
-                    }
+                  'attention_mask': batch[1],
+                  'token_type_ids': batch[2] 
+                 }
         outputs = model(**inputs)
         logits = outputs[0]
 
@@ -198,12 +201,11 @@ for batch in tqdm(test_dataloader, desc="Testing"):
         elif args.output_mode == "regression":
             pred = np.squeeze(logits_ex)
         row = {
-            'claim_id':  claim_id,
-            'logits': logits_ex,
-            'pred': pred
+            'claim_id':  int(claim_id),
+            'pred': int(pred)
         }
         results.append(row)
 
-output_test_file = os.path.join(args.output_dir, "test_results.csv")
 df = pd.DataFrame(results)
-df.to_csv(output_test_file, index=False)
+df = df[['claim_id', 'pred']]
+df.to_csv(args.output_file_path, index=False, header=False)

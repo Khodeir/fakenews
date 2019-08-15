@@ -2,13 +2,15 @@
 FROM python:3.7-slim
 
 # Set the working directory to /app
-WORKDIR /app
+WORKDIR /usr/src/
+RUN mkdir /usr/src/models
+RUN mkdir /usr/src/condensed_articles
 
 # Copy the current directory contents into the container at /app
-COPY ./condense_articles_docker.py /app
-COPY ./data_providers.py /app
-COPY ./run_lang_model.py /app
-COPY ./start.sh /app
+COPY ./do_inference.py /usr/src/
+COPY ./data_providers.py /usr/src/
+COPY /home/ubuntu/results/bert_base_uncased_sts-b /usr/src/models/bert_base_uncased_sts-b
+COPY /home/ubuntu/results/condensed_v2_base_dup_2e-5 /usr/src/models/condensed_v2_base_dup_2e-5
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
@@ -16,7 +18,5 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 # Define environment variable
 ENV NAME fakenews
 
-RUN chmod u+x start.sh
-
 # Run app.py when the container launches
-CMD ./start.sh
+CMD [ "python3", "/usr/src/do_inference.py" ]
