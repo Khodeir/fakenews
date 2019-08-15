@@ -69,9 +69,24 @@ class FakeNewsProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(data_dir, "dev_split.json")
     
-    def get_test_examples(self, data_dir):
-        """See base class."""
-        return self._create_examples(data_dir, "dev_split.json")
+    def get_test_examples(self, data_file, condensed_dir):
+        """Creates test examples for inference."""
+        examples = []
+        df = pd.read_json(data_file)
+        for (_, row) in df.iterrows():
+            claim = row[0]
+            claim_id = row[3]
+            
+            articles_condensed_path = os.path.join(
+                condensed_dir,
+                f'{claim_id}_top20_txt.txt')
+            with open(articles_condensed_path) as f:
+                txt = f.read()
+
+            examples.append(
+                InputExample(guid=claim_id, text_a=claim, text_b=txt, label=0))
+        return examples
+
 
     def get_labels(self):
         """See base class."""
@@ -96,7 +111,7 @@ class FakeNewsProcessor(DataProcessor):
             examples.append(
                 InputExample(guid=claim_id, text_a=claim, text_b=txt, label=label))
         return examples
-
+        
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer, output_mode,
