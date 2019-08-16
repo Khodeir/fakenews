@@ -53,7 +53,7 @@ train_data = DataLoader(
 )
 
 optimizer = torch.optim.Adam(
-    model.parameters(), lr=5e-4, weight_decay=0
+    model.parameters(), lr=1e-4, weight_decay=0
 )
 
 criterion = torch.nn.CrossEntropyLoss(
@@ -81,6 +81,9 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward(retain_graph=True)
         optimizer.step()
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                writer.add_histogram(name, param.grad, num_iters) 
         print(loss.cpu().detach().numpy())
         num_iters += 1
         if writer is not None:
