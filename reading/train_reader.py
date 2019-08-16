@@ -81,6 +81,7 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward(retain_graph=True)
         optimizer.step()
+        print(loss.cpu().detach().numpy())
         num_iters += 1
         if writer is not None:
             writer.add_scalar(

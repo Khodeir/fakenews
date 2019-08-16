@@ -8,7 +8,7 @@ class TaskSpecificAttention(nn.Module):
         super(TaskSpecificAttention, self).__init__()
         self.input_size = input_size
         self.projection_size = projection_size
-        self.context_vector = torch.randn((1, 1, projection_size), requires_grad=True)
+        self.context_vector = nn.Parameter(torch.randn((1, 1, projection_size)))
         self.input_projection = nn.Tanh(nn.Linear(input_size, projection_size))
         self.softmax = nn.Softmax()
 
@@ -27,11 +27,13 @@ class BiLinearAttention(nn.Module):
         self.softmax = nn.Softmax(dim=0)
 
     def forward(self, question, document):
-        '''inputs should be [seq_length, batch_size, input_size]'''
-        document_context = torch.matmul(document, self.context_matrix)
-        attention_matrix = question.transpose(0, 1).bmm(document_context.permute(1, 2, 0))
-        thing = attention_matrix.sum(1, keepdim=True).permute(2,0,1)
-        attention_weights = self.softmax(thing)
+        '''
+        document should be [doc_seq_length, batch_size, input_size]
+        question should be [batch_size, input_size]
+        '''
+        document_context = torch.einsum('qh,mnh->mnq', self.context_matrix, document)
+        attention_matrix = torch.einsum('nh,mnh->mn', question, document_context)
+        attention_weights = self.softmax(attention_matrix)
         return attention_weights
 
 
@@ -42,11 +44,11 @@ class AttentiveReader(nn.Module):
         self.output_dim = hidden_dim * 2 if lstm_bidirectional else 1
 
         if initial_embeddings is not None:
-            self.word_embeddings = nn.Embedding.from_pretrained(initial_embeddings, freeze=False)
+            self.word_embeddings = nn.Embedding.from_pretrained(initial_embeddings, freeze=True)
         else:
             self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
 
-        self.question_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=lstm_layers, bidirectional=lstm_bidirectional)
+        self.question_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1, bidirectional=lstm_bidirectional)
         self.document_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=lstm_layers, bidirectional=lstm_bidirectional)
         self.attention = BiLinearAttention(input_size=self.output_dim)
 
@@ -55,13 +57,12 @@ class AttentiveReader(nn.Module):
         document_embedding = self.word_embeddings(document)
 
         # TODO: Maybe i only need the last states of the lstm
-        question_encoding, _ = self.question_lstm(question_embedding)
+        _, (question_encoding, _) = self.question_lstm(question_embedding)
+        question_encoding = question_encoding.transpose(0, 1).reshape(-1, self.output_dim)
         document_encoding, _ = self.document_lstm(document_embedding)
-        # print('encoding sizes', question_encoding.shape, document_encoding.shape)
 
         attention = self.attention(question_encoding, document_encoding)
-        output = (attention * document_encoding).sum(0)
-
+        output = (attention.unsqueeze(2) * document_encoding).sum(0)
         return output, attention
 
 class AttentiveClassifier(nn.Module):
