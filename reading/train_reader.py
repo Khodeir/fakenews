@@ -10,22 +10,13 @@ from torch.nn.utils.rnn import pad_sequence
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 PATH = "models/reader_learn_embedding"
+RESUME_FROM = os.environ.get('RESUME_FROM', None)
 writer = SummaryWriter(PATH)
 embeddings = load_embeddings()
 
 dataset = ClaimDataset(
     data_path='data/train.json'
 )
-
-model = AttentiveClassifier(
-    num_classes=3,
-    vocab_size=embeddings.shape[0],
-    embedding_dim=embeddings.shape[1],
-    initial_embeddings=torch.tensor(embeddings, dtype=torch.float32),
-    hidden_dim=200,
-    lstm_layers=2,
-    lstm_bidirectional=True
-).to(device)
 
 def collate_fn(batch):
     if len(batch) == 1:
@@ -51,7 +42,24 @@ train_data = DataLoader(
     collate_fn=collate_fn,
     num_workers=2
 )
-
+model = AttentiveClassifier(
+    num_classes=3,
+    vocab_size=embeddings.shape[0],
+    embedding_dim=embeddings.shape[1],
+    initial_embeddings=torch.tensor(embeddings, dtype=torch.float32),
+    hidden_dim=200,
+    lstm_layers=2,
+    lstm_bidirectional=True
+).to(device)
+if RESUME_FROM:
+    print('Resuming from {}'.format(RESUME_FROM))
+    model.load_state_dict(torch.load(RESUME_FROM))
+    name = os.path.split(RESUME_FROM)[-1]
+    epoch = int(name.split('_')[-1]) + 1
+    num_iters = epoch * len(train_data)
+else:
+    epoch = 0
+    num_iters = 0
 optimizer = torch.optim.Adam(
     model.parameters(), lr=1e-4, weight_decay=0
 )
@@ -61,9 +69,8 @@ criterion = torch.nn.CrossEntropyLoss(
 )
 
 num_epochs = 20
-num_iters = 0
 torch.save(model.state_dict(), os.path.join(PATH, 'model_{}'.format(0)))
-for epoch in range(num_epochs):
+for epoch in range(epoch + num_epochs):
     print('Epoch {}'.format(num_iters))
     for (
         (claim_text, document_text),
