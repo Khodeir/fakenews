@@ -1,7 +1,7 @@
 import os
 import json
 
-DATA_DIR = 'data/train'
+DATA_DIR = os.environ.get('DATA_DIR', 'data/train')
 
 def load_data(path=os.path.join(DATA_DIR, 'train.json')):
     with open(path, 'r') as json_fp:

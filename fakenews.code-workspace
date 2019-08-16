@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "/Users/mohamedkhodeir/fakenews/"
+		}
+	],
+	"settings": {
+		"sync-rsync.onSave": false,
+		"sync-rsync.executableShell":  "/bin/bash",
+		"sync-rsync.sites": [
+			{
+				"localPath": "/Users/mohamedkhodeir/fakenews",
+				"remotePath": "ubuntu@localhost:/home/ubuntu/fakenews/",
+				"shell": "/usr/bin/ssh -i ~/.ssh/mohamed_personal -p 6666"
+			},
+		]
+	}
+}

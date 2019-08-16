@@ -44,7 +44,7 @@ class AttentiveReader(nn.Module):
         self.output_dim = hidden_dim * 2 if lstm_bidirectional else 1
 
         if initial_embeddings is not None:
-            self.word_embeddings = nn.Embedding.from_pretrained(initial_embeddings, freeze=True)
+            self.word_embeddings = nn.Embedding.from_pretrained(initial_embeddings, freeze=False)
         else:
             self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
 
