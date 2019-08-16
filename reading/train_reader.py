@@ -9,7 +9,7 @@ from functools import partial
 from torch.nn.utils.rnn import pad_sequence
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-PATH = "models/reader_debug"
+PATH = "models/reader_learn_embedding"
 writer = SummaryWriter(PATH)
 embeddings = load_embeddings()
 
