@@ -17,21 +17,23 @@ from pytorch_transformers import (BertConfig,
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_file", default='/usr/local/dataset/metadata.json', type=str, required=True,
+parser.add_argument("--data_file", default='/usr/local/dataset/metadata.json', type=str, required=False,
                     help="Path to json file with claim id, claim, and article ids.")
-parser.add_argument("--model_dir", default='/usr/src/models', type=str, required=True,
+parser.add_argument("--model_dir", default='/usr/src', type=str, required=False,
                     help="Path to pretrained model.")
-parser.add_argument("--article_dir", default='/usr/local/dataset/articles', type=str, required=True,
+parser.add_argument("--article_dir", default='/usr/local/dataset/articles', type=str, required=False,
                     help="Path to dir for articles.")
-parser.add_argument("--save_dir", default='/usr/src/condensed_articles', type=str, required=True,
+parser.add_argument("--save_dir", default='/usr/src/condensed_articles', type=str, required=False,
                     help="Path to dir for saving.")
-parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=True,
+parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=False,
                     help="File path for output file.")
 parser.add_argument("--do_lower_case", action='store_true',
                     help="Set this flag if you are using an uncased model.")
-parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int, required=True,
+parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int, required=False,
                     help="Batch size per GPU/CPU for evaluation.")
-parser.add_argument("--model_type", default='bert', type=str, required=True,
+parser.add_argument("--max_seq_length", default=512, type=int, required=False,
+                    help="Max sequence length for inference.")
+parser.add_argument("--model_type", default='bert', type=str, required=False,
                     help="Model type.")
 
 args = parser.parse_args()
@@ -128,7 +130,7 @@ for idx, row in df.iterrows():
         f.write(condensed_txt)
 
 # Prepare data
-args.task_name = 'fakenews'
+args.task_name = 'fn'
 if args.task_name not in processors:
     raise ValueError("Task not found: %s" % (args.task_name))
 processor = processors[args.task_name]()
@@ -171,7 +173,7 @@ def load_and_cache_examples(args, task, tokenizer):
 
 test_dataset = load_and_cache_examples(args, args.task_name, tokenizer)
 
-args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+args.eval_batch_size = args.per_gpu_eval_batch_size * 1
 # Note that DistributedSampler samples randomly
 test_sampler = SequentialSampler(test_dataset)
 test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=args.eval_batch_size)
@@ -184,7 +186,7 @@ print("  Batch size = %d", args.eval_batch_size)
 results = []
 for batch in tqdm(test_dataloader, desc="Testing"):
     model.eval()
-    batch = tuple(t.to(args.device) for t in batch)
+    batch = tuple(t.to('cuda') for t in batch)
 
     with torch.no_grad():
         inputs = {'input_ids':      batch[0],
