@@ -52,5 +52,4 @@ python do_inference.py \
 --data_file=/home/ubuntu/dataset/metadata.json \
 --model_dir=/home/ubuntu/docker_submission \
 --article_dir=/home/ubuntu/dataset/articles \
---save_dir=/home/ubuntu/dataset/condensed_articles \
 --output_file_path=/home/ubuntu/dataset/predictions.txt \
