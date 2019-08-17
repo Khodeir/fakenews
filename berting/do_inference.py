@@ -27,7 +27,7 @@ parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', 
                     help="File path for output file.")
 parser.add_argument("--do_lower_case", action='store_true',
                     help="Set this flag if you are using an uncased model.")
-parser.add_argument("--per_gpu_eval_batch_size", default=32, type=int, required=False,
+parser.add_argument("--per_gpu_eval_batch_size", default=128, type=int, required=False,
                     help="Batch size per GPU/CPU for evaluation.")
 parser.add_argument("--max_seq_length", default=512, type=int, required=False,
                     help="Max sequence length for inference.")
@@ -91,7 +91,7 @@ def get_inference_examples(df, distillation_model):
         dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids)
         
         sampler = SequentialSampler(dataset)
-        dataloader = DataLoader(dataset, sampler=sampler, batch_size=128)
+        dataloader = DataLoader(dataset, sampler=sampler, batch_size=args.per_gpu_eval_batch_size*4)
 
         preds = None
         for batch in tqdm(dataloader, desc="Evaluating"):
