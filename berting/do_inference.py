@@ -23,8 +23,6 @@ parser.add_argument("--model_dir", default='/usr/src', type=str, required=False,
                     help="Path to pretrained model.")
 parser.add_argument("--article_dir", default='/usr/local/dataset/articles', type=str, required=False,
                     help="Path to dir for articles.")
-parser.add_argument("--save_dir", default='/usr/src/condensed_articles', type=str, required=False,
-                    help="Path to dir for saving.")
 parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=False,
                     help="File path for output file.")
 parser.add_argument("--do_lower_case", action='store_true',
@@ -58,76 +56,83 @@ def get_article_txt(did, also_print=False):
         print(txt)
     return txt
 
-for idx, row in df.iterrows():
-    claim = row[0]
-    claim_id = row[3]
-    articles = row[5]
-    
-    examples = []
-    for article_id in articles:
-        text = get_article_txt(article_id, also_print=False)
-        doc = spacy_nlp(text)
-        for i, token in enumerate(doc.sents):
-            if len(token.text) > 25:
-                examples.append(InputExample(guid=article_id, text_a=claim, text_b=token.text, label=0))
-    
-    if len(examples) == 0:
-        with open(f'{args.save_dir}/{claim_id}_top20_txt.txt', 'w+') as f:
-            f.write('placeholder')
-    
-    
-    features = convert_examples_to_features(examples, [None], 128, tokenizer, 'regression',
-            cls_token_at_end=False,            # xlnet has a cls token at the end
-            cls_token=tokenizer.cls_token,
-            sep_token=tokenizer.sep_token,
-            cls_token_segment_id=0,
-            pad_on_left=False,                # pad on the left for xlnet
-            pad_token_segment_id=0)
-    
-    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-    all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
-    all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
-    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids)
-    
-    sampler = SequentialSampler(dataset)
-    dataloader = DataLoader(dataset, sampler=sampler, batch_size=32)
-
-    preds = None
-    for batch in tqdm(dataloader, desc="Evaluating"):
-        model.eval()
-        batch = tuple(t.to('cuda') for t in batch)
-
-        with torch.no_grad():
-            inputs = {'input_ids':      batch[0],
-                      'attention_mask': batch[1],
-                      'token_type_ids': batch[2],
-                      }
-            outputs = model(**inputs)
-            logits = outputs[0]
-            #probs = F.softmax(logits, dim=1)
-            if preds is None:
-                #preds = probs.detach().cpu().numpy()
-                preds = logits.detach().cpu().numpy()
-            else:
-                #preds = np.append(preds, probs.detach().cpu().numpy(), axis=0)
-                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
-    
-    assert len(preds) == len(examples)
-    flattened = preds.flatten()
-    if len(flattened) > 21:
-        indices = list(np.argpartition(flattened, -21)[-21:])
-    else:
-        indices = list(range(len(flattened)))
-    top = np.argmax(flattened)
-    if flattened[top] > 3.5:
-        indices.remove(top)
-    
-    filtered = sorted(indices)
-    
-    condensed_txt = '\n'.join([examples[idx].text_b for idx in filtered])
+def get_inference_examples(df, distillation_model):
+    examples_phase2 = []
+    for _, row in df.iterrows():
+        claim = row[0]
+        claim_id = row[3]
+        articles = row[5]
         
-    with open(f'{args.save_dir}/{claim_id}_top20_txt.txt', 'w+') as f:
-        f.write(condensed_txt)
+        examples = []
+        for article_id in articles:
+            text = get_article_txt(article_id, also_print=False)
+            doc = spacy_nlp(text)
+            for i, token in enumerate(doc.sents):
+                if len(token.text) > 25:
+                    examples.append(InputExample(guid=article_id, text_a=claim, text_b=token.text, label=0))
+        
+        if len(examples) == 0:
+            examples_phase2.append(
+                InputExample(guid=claim_id, text_a=claim, text_b='placeholder', label=0))
+            continue
+        
+        
+        features = convert_examples_to_features(examples, [None], 128, tokenizer, 'regression',
+                cls_token_at_end=False,            # xlnet has a cls token at the end
+                cls_token=tokenizer.cls_token,
+                sep_token=tokenizer.sep_token,
+                cls_token_segment_id=0,
+                pad_on_left=False,                # pad on the left for xlnet
+                pad_token_segment_id=0)
+        
+        all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
+        all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
+        all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
+        dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids)
+        
+        sampler = SequentialSampler(dataset)
+        dataloader = DataLoader(dataset, sampler=sampler, batch_size=32)
+
+        preds = None
+        for batch in tqdm(dataloader, desc="Evaluating"):
+            distillation_model.eval()
+            batch = tuple(t.to('cuda') for t in batch)
+
+            with torch.no_grad():
+                inputs = {'input_ids':      batch[0],
+                          'attention_mask': batch[1],
+                          'token_type_ids': batch[2],
+                         }
+                outputs = distillation_model(**inputs)
+                logits = outputs[0]
+                #probs = F.softmax(logits, dim=1)
+                if preds is None:
+                    #preds = probs.detach().cpu().numpy()
+                    preds = logits.detach().cpu().numpy()
+                else:
+                    #preds = np.append(preds, probs.detach().cpu().numpy(), axis=0)
+                    preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+        
+        assert len(preds) == len(examples)
+        flattened = preds.flatten()
+        if len(flattened) > 21:
+            indices = list(np.argpartition(flattened, -21)[-21:])
+        else:
+            indices = list(range(len(flattened)))
+        top = np.argmax(flattened)
+        if flattened[top] > 3.5:
+            indices.remove(top)
+        
+        filtered = sorted(indices)
+        
+        condensed_txt = '\n'.join([examples[idx].text_b for idx in filtered])
+            
+        examples_phase2.append(
+            InputExample(guid=claim_id, text_a=claim, text_b=condensed_txt, label=0))
+    
+    return examples_phase2
+
+examples_phase2 = get_inference_examples(df, model)
 
 # Prepare data
 args.task_name = 'fn'
@@ -144,12 +149,11 @@ model = model_class.from_pretrained(f'{args.model_dir}/condensed_v2_base_dup_2e-
 model.eval()
 model = model.to('cuda')
 
-def load_and_cache_examples(args, task, tokenizer):
+def load_and_cache_examples(args, task, tokenizer, examples):
     processor = processors[task]()
     output_mode = output_modes[task]
     # Load data features from cache or dataset file
     label_list = processor.get_labels()
-    examples = processor.get_test_examples(args.data_file, args.save_dir)
     features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
         cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
         cls_token=tokenizer.cls_token,
@@ -171,7 +175,7 @@ def load_and_cache_examples(args, task, tokenizer):
     dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_guids)
     return dataset
 
-test_dataset = load_and_cache_examples(args, args.task_name, tokenizer)
+test_dataset = load_and_cache_examples(args, args.task_name, tokenizer, examples_phase2)
 
 args.eval_batch_size = args.per_gpu_eval_batch_size * 1
 # Note that DistributedSampler samples randomly
