@@ -5,7 +5,7 @@
 		}
 	],
 	"settings": {
-		"sync-rsync.onSave": false,
+		"sync-rsync.onSave": true,
 		"sync-rsync.executableShell":  "/bin/bash",
 		"sync-rsync.sites": [
 			{

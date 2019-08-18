@@ -48,8 +48,8 @@ class AttentiveReader(nn.Module):
         else:
             self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
 
-        self.question_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=1, bidirectional=lstm_bidirectional)
-        self.document_lstm = nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim, num_layers=lstm_layers, bidirectional=lstm_bidirectional)
+        self.question_lstm = nn.LSTM(input_size=embedding_dim, dropout=0.5, hidden_size=hidden_dim, num_layers=1, bidirectional=lstm_bidirectional)
+        self.document_lstm = nn.LSTM(input_size=embedding_dim, dropout=0.5, hidden_size=hidden_dim, num_layers=lstm_layers, bidirectional=lstm_bidirectional)
         self.attention = BiLinearAttention(input_size=self.output_dim)
 
     def forward(self, question, document):

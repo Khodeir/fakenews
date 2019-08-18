@@ -15,6 +15,7 @@ class ClaimDataset(Dataset):
         self._vocab = {word: index for index, word in enumerate(load_vocab())}
         self._max_num_articles = 5
         self._max_words_total  = 500
+        self.return_ids = False
 
     def preprocess(self, doc):
         return torch.tensor([self._vocab.get(token, 0) for token in tokenizer(doc.lower())])
@@ -31,10 +32,13 @@ class ClaimDataset(Dataset):
         words_left = self._max_words_total
         claim_articles_preprocessed = []
         for i, article in enumerate(claim_articles):
+            words_to_include = (words_left // (num_articles - i))
             claim_articles_preprocessed.extend(
-                self.preprocess(article)[:(words_left // (num_articles - i))]
+                self.preprocess(article)[:words_to_include]
             )
             words_left = self._max_words_total - len(claim_articles_preprocessed)
+        if self.return_ids:
+            return claim.id, (claim_text_preprocessed, claim_articles_preprocessed), claim.label
         return (claim_text_preprocessed, claim_articles_preprocessed), claim.label
 
 

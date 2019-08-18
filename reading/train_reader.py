@@ -9,9 +9,9 @@ from functools import partial
 from torch.nn.utils.rnn import pad_sequence
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-PATH = "models/reader_learn_embedding"
+MODEL_DIR = os.environ.get('MODEL_DIR', None)
 RESUME_FROM = os.environ.get('RESUME_FROM', None)
-writer = SummaryWriter(PATH)
+writer = SummaryWriter(MODEL_DIR)
 embeddings = load_embeddings()
 
 dataset = ClaimDataset(
@@ -54,9 +54,9 @@ model = AttentiveClassifier(
 if RESUME_FROM:
     print('Resuming from {}'.format(RESUME_FROM))
     model.load_state_dict(torch.load(RESUME_FROM))
-    name = os.path.split(RESUME_FROM)[-1]
-    epoch = int(name.split('_')[-1]) + 1
-    num_iters = epoch * len(train_data)
+    name = os.path.split(RESUME_FROM)[-1].replace(".pt", "")
+    epoch = int(name.split('_')[-2]) + 1
+    num_iters = int(name.split('_')[-1]) + 1
 else:
     epoch = 0
     num_iters = 0
@@ -69,8 +69,7 @@ criterion = torch.nn.CrossEntropyLoss(
 )
 
 num_epochs = 20
-torch.save(model.state_dict(), os.path.join(PATH, 'model_{}'.format(0)))
-for epoch in range(epoch + num_epochs):
+for epoch in range(epoch, epoch + num_epochs):
     print('Epoch {}'.format(num_iters))
     for (
         (claim_text, document_text),
@@ -100,4 +99,4 @@ for epoch in range(epoch + num_epochs):
         if num_iters % 10 == 0:
             torch.cuda.empty_cache()
 
-    torch.save(model.state_dict(), os.path.join(PATH, 'model_{}'.format(epoch)))
+    torch.save(model.state_dict(), os.path.join(MODEL_DIR, 'model_{}_{}.pt'.format(epoch, num_iters)))
