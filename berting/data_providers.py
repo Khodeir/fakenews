@@ -99,17 +99,18 @@ class FakeNewsProcessor(DataProcessor):
         df = pd.read_json(path)
         for (_, row) in df.iterrows():
             claim = row[0]
+            claimant = row[1]
             claim_id = row[3]
             label = row[4]
             
             articles_condensed_path = os.path.join(
                 data_dir,
-                f'condensed_v3/{claim_id}_top6_txt.txt')
+                f'condensed_v2/{claim_id}_top20_txt.txt')
             with open(articles_condensed_path) as f:
                 txt = f.read()
 
             examples.append(
-                InputExample(guid=claim_id, text_a=claim, text_b=txt, label=label))
+                InputExample(guid=claim_id, text_a=claimant + ' : ' + claim, text_b=txt, label=label))
         return examples
         
 
