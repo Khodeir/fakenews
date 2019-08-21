@@ -3,7 +3,7 @@ python run_lang_model.py \
 --model_type=bert \
 --model_name_or_path=bert-base-cased \
 --task_name=fn \
---output_dir=/home/ubuntu/results/condensed_v2_claimant_cased_2e-5 \
+--output_dir=/home/ubuntu/results/condensed_v3_claimant_cased_2e-5 \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -16,7 +16,7 @@ python run_lang_model.py \
 --logging_steps=50 \
 --save_steps=500 \
 --learning_rate=2e-5 \
---run_name=runs/condensed_v2_claimant_cased_2e-5
+--run_name=runs/condensed_v3_claimant_cased_2e-5
 
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \
