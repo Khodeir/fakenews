@@ -100,6 +100,7 @@ class FakeNewsProcessor(DataProcessor):
         for (_, row) in df.iterrows():
             claim = row[0]
             claimant = row[1]
+            date = row[2]
             claim_id = row[3]
             label = row[4]
             
@@ -108,9 +109,12 @@ class FakeNewsProcessor(DataProcessor):
                 f'condensed_v3/{claim_id}_top6_txt.txt')
             with open(articles_condensed_path) as f:
                 txt = f.read()
+            
+            date_str = date.strftime("%B %d, %Y")
+            text_a = claimant + ' ' + date_str + ' : ' + claim 
 
             examples.append(
-                InputExample(guid=claim_id, text_a=claimant + ' : ' + claim, text_b=txt, label=label))
+                InputExample(guid=claim_id, text_a=text_a, text_b=txt, label=label))
         return examples
         
 
