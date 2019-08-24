@@ -1,0 +1,5 @@
+nltk
+sklearn
+tensorboardx
+pandas
+numpy

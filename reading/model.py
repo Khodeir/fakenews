@@ -79,6 +79,20 @@ class AttentiveClassifier(nn.Module):
         classes = self.softmax(logits)
 
         return classes, logits
+    
+def load_model(path, map_location=None):
+    model = AttentiveClassifier(
+        num_classes=3,
+        vocab_size=50002,  # doesnt matter
+        embedding_dim=100,  # doesnt matter
+        hidden_dim=200,
+        lstm_layers=2,
+        lstm_bidirectional=True
+    )
+    print('Resuming from {}'.format(path))
+    model.load_state_dict(torch.load(path, map_location=map_location))
+    return model
+
 
 if __name__ == '__main__':
     m = AttentiveReader(embedding_dim=20, hidden_dim=10, vocab_size=100, lstm_layers=1, lstm_bidirectional=True)
