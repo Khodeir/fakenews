@@ -1,8 +1,8 @@
-from reading.build_vocab import load_vocab, load_data
+from reading.build_vocab import load_vocab
 import torch
 import numpy as np
 from torch.utils.data import Dataset
-from utils.claim import Claim
+from utils.claim import Claim, load_data
 import re
 token_pattern = re.compile(r"(?u)\b\w\w+\b")
 tokenizer = lambda doc: token_pattern.findall(doc)

@@ -5,6 +5,7 @@ import torch
 import numpy as np
 from tensorboardX import SummaryWriter
 from utils.metrics import acc_and_f1
+from reading.model import load_model
 import pandas as pd
 
 def load_eval_data(path='data/train.json'):
@@ -19,20 +20,6 @@ def load_eval_data(path='data/train.json'):
         shuffle=True
     )
     return eval_data
-
-def load_model(path):
-    model = AttentiveClassifier(
-        num_classes=3,
-        vocab_size=50002, # doesnt matter
-        embedding_dim=100, # doesnt matter
-        hidden_dim=200,
-        lstm_layers=2,
-        lstm_bidirectional=True
-    )
-    print('Resuming from {}'.format(path))
-    model.load_state_dict(torch.load(path, map_location='cpu'))
-    model.eval()
-    return model
 
 def model_eval(model, eval_data, limit=np.inf):
     correct = 0
@@ -67,14 +54,16 @@ def model_eval(model, eval_data, limit=np.inf):
 
     return metrics, dict(ids=ids, labels=labels, preds=preds)
 
+
 if __name__ == '__main__':
-    DATA_PATH = os.environ.get('DATA_PATH', None)
+    JSON_PATH = os.environ.get('JSON_PATH', None)
     RESUME_FROM = os.environ.get('RESUME_FROM', None)
     LIMIT =  int(os.environ.get('EVAL_LIMIT', 1000000))
     DF_PATH = os.environ.get('DF_PATH', None)
     ITER = os.environ.get('ITER', False)
-    dataset = load_eval_data(DATA_PATH)
-    model = load_model(RESUME_FROM)
+    dataset = load_eval_data(JSON_PATH)
+    model = load_model(RESUME_FROM, map_location='cpu')
+    model.eval()
     metrics, df = model_eval(model, dataset, limit=LIMIT)
     df = pd.DataFrame(df)
     if DF_PATH:

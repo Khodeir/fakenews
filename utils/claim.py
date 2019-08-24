@@ -1,7 +1,7 @@
 import os
 import json
 
-DATA_DIR = os.environ.get('DATA_DIR', 'data/train')
+DATA_DIR = os.environ.get('DATA_DIR', 'data/train/train_articles')
 
 def load_data(path=os.path.join(DATA_DIR, 'train.json')):
     with open(path, 'r') as json_fp:
@@ -10,6 +10,7 @@ def load_data(path=os.path.join(DATA_DIR, 'train.json')):
 
 class Claim:
     _related_articles_text = None
+    label = None
     @classmethod
     def from_json_object(cls, json_object):
         claim = cls()
@@ -23,6 +24,7 @@ class Claim:
 
         self._related_articles_text = []
         for i in self.related_articles:
-            with open('{}/train_articles/{}.txt'.format(DATA_DIR,i), 'rb') as related_article:
+            with open('{}/{}.txt'.format(DATA_DIR, i), 'rb') as related_article:
                 self._related_articles_text.append(related_article.read().decode('utf8'))
         return self._related_articles_text
+
