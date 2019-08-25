@@ -25,11 +25,20 @@ def collate_fn(batch):
         y = y.unsqueeze(0)
         return x, y
     else:
-        x, y = zip(*batch)
+        _, x, y = zip(*batch)
         y = torch.as_tensor(y)
         claims, docs = zip(*x)
-        claims = pad_sequence(list(map(torch.as_tensor, claims)))
-        docs = pad_sequence(list(map(torch.as_tensor, docs)))
+        claims = pad_sequence(
+            [torch.tensor(claim, dtype=torch.long) for claim in claims])
+        n_docs = max([len(doc) for doc in docs])
+        batch_docs = [[] for i in range(n_docs)]
+        for doc in docs:
+            for i in range(n_docs):
+                d = doc[i] if len(doc) > i else []
+                batch_docs[i].append(d)
+        
+        docs = [pad_sequence([torch.tensor(d, dtype=torch.long) for d in doc])
+                for doc in batch_docs]
         return (claims, docs), y
         # x = sorted(x, key=len)
 
@@ -76,11 +85,11 @@ for epoch in range(epoch, epoch + num_epochs):
         label,
     ) in train_data:
         claim_text = claim_text.to(device)
-        document_text = document_text.to(device)
+        document_text = [d.to(device) for d in document_text]
         label = label.to(device)
         _, class_logits = model(
             claim_text,
-            document_text
+            *document_text
         )
         loss = criterion(class_logits, label)
 

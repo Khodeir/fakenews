@@ -12,7 +12,8 @@ def load_eval_data(path='data/train.json'):
     dataset = ClaimDataset(
         data_path=path
     )
-    dataset.return_ids = True
+    dataset._max_num_articles = None
+    dataset._max_words_per_article = None
     eval_data = torch.utils.data.DataLoader(
         dataset,
         num_workers=1,
@@ -29,14 +30,14 @@ def model_eval(model, eval_data, limit=np.inf):
     preds = []
     for (
         i,
-        (claim_text, document_text),
+        (claim_text, docs),
         label,
     ) in eval_data:
         claim_text = torch.tensor(claim_text)
-        document_text = torch.tensor(document_text).unsqueeze(0)
+        document_text = [torch.tensor(doc).transpose(1, 0) for doc in docs]
         probs, _ = model(
             claim_text.transpose(1, 0),
-            document_text.transpose(1, 0)
+            *document_text
         )
         total += 1
         pred = probs.argmax(dim=1)

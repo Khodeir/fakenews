@@ -52,18 +52,16 @@ class AttentiveReader(nn.Module):
         self.document_lstm = nn.LSTM(input_size=embedding_dim, dropout=0.5, hidden_size=hidden_dim, num_layers=lstm_layers, bidirectional=lstm_bidirectional)
         self.attention = BiLinearAttention(input_size=self.output_dim)
 
-    def forward(self, question, document):
+    def forward(self, question, *documents):
         question_embedding = self.word_embeddings(question)
-        document_embedding = self.word_embeddings(document)
+        document_embeddings = [self.word_embeddings(document) for document in documents]
 
-        # TODO: Maybe i only need the last states of the lstm
         _, (question_encoding, _) = self.question_lstm(question_embedding)
         question_encoding = question_encoding.transpose(0, 1).reshape(-1, self.output_dim)
-        document_encoding, _ = self.document_lstm(document_embedding)
-
-        attention = self.attention(question_encoding, document_encoding)
-        output = (attention.unsqueeze(2) * document_encoding).sum(0)
-        return output, attention
+        document_encodings = [self.document_lstm(document_embedding)[0] for document_embedding in document_embeddings]
+        attentions = [self.attention(question_encoding, document_encoding).unsqueeze(2) for document_encoding in document_encodings]
+        outputs = [(attention * document_encoding).sum(0) for attention, document_encoding in zip(attentions, document_encodings)]
+        return outputs, attentions
 
 class AttentiveClassifier(nn.Module):
     def __init__(self, *args, **kwargs):
@@ -73,9 +71,10 @@ class AttentiveClassifier(nn.Module):
         self.classifier = nn.Linear(self.attentive_reader.output_dim, num_classes)
         self.softmax = nn.Softmax(dim=1)
 
-    def forward(self, question, document):
-        logits, _ = self.attentive_reader(question, document)
-        logits = self.classifier(logits)
+    def forward(self, question, *documents):
+        logits, _ = self.attentive_reader(question, *documents)
+        logits = [self.classifier(logit) for logit in logits]
+        logits = torch.stack(logits).mean(0)
         classes = self.softmax(logits)
 
         return classes, logits
