@@ -3,4 +3,5 @@ data/*
 .DS_Store
 *.ipynb
 .ipynb_checkpoints
+models/
 *.pyc
