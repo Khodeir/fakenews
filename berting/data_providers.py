@@ -10,34 +10,36 @@ from sklearn.metrics import matthews_corrcoef, f1_score, precision_score, recall
 logger = logging.getLogger(__name__)
 
 
-class InputExample(object):
-    """A single training/test example for simple sequence classification."""
+class ArticleInputExample(object):
 
-    def __init__(self, guid, text_a, text_b=None, label=None):
-        """Constructs a InputExample.
-
-        Args:
-            guid: Unique id for the example.
-            text_a: string. The untokenized text of the first sequence. For single
-            sequence tasks, only this sequence must be specified.
-            text_b: (Optional) string. The untokenized text of the second sequence.
-            Only must be specified for sequence pair tasks.
-            label: (Optional) string. The label of the example. This should be
-            specified for train and dev examples, but not for test examples.
-        """
-        self.guid = guid
+    def __init__(self, article_id, text_a, text_b, label=None):
+        self.article_id = article_id
         self.text_a = text_a
         self.text_b = text_b
         self.label = label
 
+class InputExample(object):
 
-class InputFeatures(object):
-    """A single set of features of data."""
+    def __init__(self, guid, text_a, articles, label=None):
+        self.guid = guid
+        self.text_a = text_a
+        self.articles = articles
+        self.label = label
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, guid):
+
+class ArticleInputFeatures(object):
+
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, article_id):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
+        self.label_id = label_id
+        self.article_id = article_id
+
+class InputFeatures(object):
+
+    def __init__(self, article_features, label_id, guid):
+        self.article_features = article_features
         self.label_id = label_id
         self.guid = guid
 
@@ -71,6 +73,8 @@ class FakeNewsProcessor(DataProcessor):
     
     def get_test_examples(self, data_file, condensed_dir):
         """Creates test examples for inference."""
+        raise NotImplementedError()
+        '''
         examples = []
         df = pd.read_json(data_file)
         for (_, row) in df.iterrows():
@@ -86,6 +90,7 @@ class FakeNewsProcessor(DataProcessor):
             examples.append(
                 InputExample(guid=claim_id, text_a=claim, text_b=txt, label=0))
         return examples
+        '''
 
 
     def get_labels(self):
@@ -103,28 +108,68 @@ class FakeNewsProcessor(DataProcessor):
             date = row[2]
             claim_id = row[3]
             label = row[4]
-            
-            articles_condensed_path = os.path.join(
-                data_dir,
-                f'condensed_v3/{claim_id}_top6_txt.txt')
-            with open(articles_condensed_path) as f:
-                txt = f.read()
-            
-            date_str = date.strftime("%B %d, %Y")
-            text_a = claimant + ' ' + date_str + ' : ' + claim 
+            articles = row[5]
+
+            # date_str = date.strftime("%B %d, %Y")
+            text_a = claimant + ' : ' + claim 
+            articles = []
+            for article_id in articles:
+                articles_path = os.path.join(
+                    data_dir,
+                    f'train_articles/{article_id}.txt')
+                with open(articles_path) as f:
+                    txt = f.read()
+                article_example = ArticleInputExample(
+                    article_id=article_id, text_a=text_a, text_b=txt, label=label)
+                articles.append(article_example)
 
             examples.append(
-                InputExample(guid=claim_id, text_a=text_a, text_b=txt, label=label))
+                InputExample(guid=claim_id, text_a=text_a, articles=articles, label=label))
         return examples
-        
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
+                                tokenizer, output_mode,
+                                cls_token_at_end=False, pad_on_left=False,cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
+                                sequence_a_segment_id=0, sequence_b_segment_id=1,
+                                cls_token_segment_id=0, pad_token_segment_id=0,
+                                mask_padding_with_zero=True):
+
+    label_map = {label : i for i, label in enumerate(label_list)}
+
+    features = []
+    for (ex_index, example) in enumerate(examples):
+
+        if ex_index % 10000 == 0:
+            logger.info("Writing claim example %d of %d" % (ex_index, len(examples)))
+        
+        article_features = _article_examples_to_features(
+            example.articles, label_list, max_seq_length,
+            tokenizer, output_mode,
+            cls_token_at_end, pad_on_left,
+            cls_token, sep_token, pad_token,
+            sequence_a_segment_id, sequence_b_segment_id,
+            cls_token_segment_id, pad_token_segment_id,
+            mask_padding_with_zero,
+            also_print=ex_index < 5)
+        label_id = label_map[example.label]
+
+        features.append(
+            InputFeatures(
+                article_features=article_features,
+                label_id=label_id,
+                guid=example.guid))
+
+        return features
+
+
+def _article_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer, output_mode,
                                  cls_token_at_end=False, pad_on_left=False,
                                  cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
                                  sequence_a_segment_id=0, sequence_b_segment_id=1,
                                  cls_token_segment_id=0, pad_token_segment_id=0,
-                                 mask_padding_with_zero=True):
+                                 mask_padding_with_zero=True,
+                                 also_print=False):
     """ Loads a data file into a list of `InputBatch`s
         `cls_token_at_end` define the location of the CLS token:
             - False (Default, BERT/XLM pattern): [CLS] + A + [SEP] + B + [SEP]
@@ -136,8 +181,6 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
 
     features = []
     for (ex_index, example) in enumerate(examples):
-        if ex_index % 10000 == 0:
-            logger.info("Writing example %d of %d" % (ex_index, len(examples)))
 
         tokens_a = tokenizer.tokenize(example.text_a)
 
@@ -212,23 +255,24 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
             label_id = float(example.label)
         else:
             raise KeyError(output_mode)
-
-        if ex_index < 5:
-            logger.info("*** Example ***")
-            logger.info("guid: %s" % (example.guid))
+    
+        if also_print:
+            logger.info("*** Article Example ***")
+            logger.info("article_id: %s" % (example.article_id))
             logger.info("tokens: %s" % " ".join(
-                    [str(x) for x in tokens]))
+                [str(x) for x in tokens]))
             logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
             logger.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
             logger.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
             logger.info("label: %s (id = %d)" % (example.label, label_id))
-
+     
         features.append(
-            InputFeatures(input_ids=input_ids,
-                          input_mask=input_mask,
-                          segment_ids=segment_ids,
-                          label_id=label_id,
-                          guid=example.guid))
+            ArticleInputFeatures(
+                input_ids=input_ids,
+                input_mask=input_mask,
+                segment_ids=segment_ids,
+                label_id=label_id,
+                article_id=example.article_id))
     return features
 
 
