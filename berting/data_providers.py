@@ -8,6 +8,8 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import matthews_corrcoef, f1_score, precision_score, recall_score
 
 logger = logging.getLogger(__name__)
+import torch
+from torch.utils.data import Dataset
 
 
 class ArticleInputExample(object):
@@ -346,3 +348,20 @@ processors = {
 output_modes = {
     "fn": "classification",
 }
+
+class FakeNewsDataset(Dataset):
+    def __init__(self, input_features):
+        self.features = input_features
+
+    def __len__(self):
+        return len(self.features)
+
+    def __getitem__(self, idx):
+        feature = self.features[idx]
+        afs = feature.article_features
+        all_input_ids = torch.tensor([f.input_ids for f in afs], dtype=torch.long)
+        all_input_mask = torch.tensor([f.input_mask for f in afs], dtype=torch.long)
+        all_segment_ids = torch.tensor([f.segment_ids for f in afs], dtype=torch.long)
+        label_id = torch.tensor(feature.label_id, dtype=torch.long)
+        guid = torch.tensor(feature.guid, dtype=torch.long)
+        return (all_input_ids, all_input_mask, all_segment_ids, label_id, guid)

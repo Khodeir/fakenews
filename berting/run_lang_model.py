@@ -22,6 +22,8 @@ from pytorch_transformers import (WEIGHTS_NAME, BertConfig,
 
 from pytorch_transformers import AdamW, WarmupLinearSchedule
 
+from modeling import BertForMultiSequenceClassification
+
 from data_providers import (compute_metrics, convert_examples_to_features,
                             output_modes, processors)
 
@@ -30,7 +32,7 @@ logger = logging.getLogger(__name__)
 ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, XLMConfig)), ())
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
+    'bert': (BertConfig, BertForMultiSequenceClassification, BertTokenizer),
     'xlnet': (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
     'xlm': (XLMConfig, XLMForSequenceClassification, XLMTokenizer),
 }
@@ -279,7 +281,10 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
                 #torch.save(features, cached_features_file)
 
     # Convert to Tensors and build dataset
-    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
+    all_input_ids = []
+    for af in features.article_features:
+        all_input_ids.append([f.input_ids for f in af])
+    all_input_ids = torch.tensor([f.input_ids for f in features.article_features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
     if output_mode == "classification":
