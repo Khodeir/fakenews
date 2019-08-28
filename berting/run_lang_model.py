@@ -25,7 +25,7 @@ from pytorch_transformers import AdamW, WarmupLinearSchedule
 from modeling import BertForMultiSequenceClassification
 
 from data_providers import (compute_metrics, convert_examples_to_features,
-                            output_modes, processors)
+                            output_modes, processors, FakeNewsDataset)
 
 logger = logging.getLogger(__name__)
 
@@ -281,19 +281,7 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
                 #torch.save(features, cached_features_file)
 
     # Convert to Tensors and build dataset
-    all_input_ids = []
-    for af in features.article_features:
-        all_input_ids.append([f.input_ids for f in af])
-    all_input_ids = torch.tensor([f.input_ids for f in features.article_features], dtype=torch.long)
-    all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
-    all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
-    if output_mode == "classification":
-        all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.long)
-    elif output_mode == "regression":
-        all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.float)
-    all_guids = torch.tensor([f.guid for f in features], dtype=torch.long)
-
-    dataset = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_guids)
+    dataset = FakeNewsDataset(features)
     return dataset
 
 

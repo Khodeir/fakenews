@@ -16,21 +16,13 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
 
         self.apply(self.init_weights)
 
-    def forward(self, input_chunks, labels):
-        chunk_outputs = []
-        for chunk in input_chunks:
-            input_ids = chunk[0]
-            position_ids = chunk[1]
-            token_type_ids = chunk[2]
-            attention_mask = chunk[3]
-            head_mask = chunk[4]
-
-            outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,
-                                attention_mask=attention_mask, head_mask=head_mask)
-            pooled_output = outputs[1]
-            chunk_outputs.append(pooled_output)
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None,
+                position_ids=None, head_mask=None):
+        outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,
+                            attention_mask=attention_mask, head_mask=head_mask)
+        pooled_outputs = outputs[1]
         
-        mean = torch.mean(torch.stack(chunk_outputs))
+        mean = torch.mean(pooled_outputs, 0)
         mean = self.dropout(mean)
         logits = self.classifier(mean)
 

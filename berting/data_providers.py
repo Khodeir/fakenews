@@ -130,11 +130,11 @@ class FakeNewsProcessor(DataProcessor):
         return examples
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
-                                tokenizer, output_mode,
-                                cls_token_at_end=False, pad_on_left=False,cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
-                                sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                cls_token_segment_id=0, pad_token_segment_id=0,
-                                mask_padding_with_zero=True):
+                                 tokenizer, output_mode,
+                                 cls_token_at_end=False, pad_on_left=False,cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
+                                 sequence_a_segment_id=0, sequence_b_segment_id=1,
+                                 cls_token_segment_id=0, pad_token_segment_id=0,
+                                 mask_padding_with_zero=True):
 
     label_map = {label : i for i, label in enumerate(label_list)}
 
@@ -153,6 +153,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
             cls_token_segment_id, pad_token_segment_id,
             mask_padding_with_zero,
             also_print=ex_index < 5)
+        
         label_id = label_map[example.label]
 
         features.append(
@@ -165,13 +166,13 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
 
 
 def _article_examples_to_features(examples, label_list, max_seq_length,
-                                 tokenizer, output_mode,
-                                 cls_token_at_end=False, pad_on_left=False,
-                                 cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
-                                 sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                 cls_token_segment_id=0, pad_token_segment_id=0,
-                                 mask_padding_with_zero=True,
-                                 also_print=False):
+                                  tokenizer, output_mode,
+                                  cls_token_at_end=False, pad_on_left=False,
+                                  cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
+                                  sequence_a_segment_id=0, sequence_b_segment_id=1,
+                                  cls_token_segment_id=0, pad_token_segment_id=0,
+                                  mask_padding_with_zero=True,
+                                  also_print=False):
     """ Loads a data file into a list of `InputBatch`s
         `cls_token_at_end` define the location of the CLS token:
             - False (Default, BERT/XLM pattern): [CLS] + A + [SEP] + B + [SEP]
