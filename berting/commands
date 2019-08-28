@@ -3,20 +3,20 @@ python run_lang_model.py \
 --model_type=bert \
 --model_name_or_path=bert-base-cased \
 --task_name=fn \
---output_dir=/home/ubuntu/results/condensed_v3_claimant_cased_2e-5 \
+--output_dir=/home/ubuntu/results/multi_article_cased_2e-5 \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
---gradient_accumulation_steps=4 \
+--gradient_accumulation_steps=32 \
 --cache_dir=/home/ubuntu/pretrained_models \
 --overwrite_output_dir \
---per_gpu_train_batch_size=8 \
---per_gpu_eval_batch_size=8 \
+--per_gpu_train_batch_size=1 \
+--per_gpu_eval_batch_size=1 \
 --num_train_epochs=3.0 \
---logging_steps=50 \
+--logging_steps=100 \
 --save_steps=500 \
 --learning_rate=2e-5 \
---run_name=runs/condensed_v3_claimant_cased_2e-5
+--run_name=runs/multi_article_cased_2e-5
 
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \

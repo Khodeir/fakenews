@@ -21,20 +21,15 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
         outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,
                             attention_mask=attention_mask, head_mask=head_mask)
         pooled_outputs = outputs[1]
-        
-        mean = torch.mean(pooled_outputs, 0)
+        # should be size (batch, num_articles, hidden)
+        mean = pooled_outputs.mean(dim=-2)
         mean = self.dropout(mean)
         logits = self.classifier(mean)
 
         outputs = (logits,) 
         if labels is not None:
-            if self.num_labels == 1:
-                #  We are doing regression
-                loss_fct = MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
-            else:
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            loss_fct = CrossEntropyLoss()
+            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             outputs = (loss,) + outputs
 
         return outputs  # (loss), logits
