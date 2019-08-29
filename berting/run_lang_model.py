@@ -122,7 +122,7 @@ def train(args, train_dataset, model, tokenizer):
             
             ### training evaluation
             if preds is None:
-                preds = [logits.detach().cpu().numpy()]
+                preds = logits.detach().cpu().numpy()
                 out_label_ids = inputs['labels'].detach().cpu().numpy()
             else:
                 preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)

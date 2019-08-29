@@ -32,7 +32,7 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
         # should be size (num_articles, hidden)
         mean = pooled_outputs.mean(dim=-2)
         mean = self.dropout(mean)
-        logits = self.classifier(mean)
+        logits = self.classifier(mean).view(1, self.num_labels)
 
         outputs = (logits,) 
         if labels is not None:
