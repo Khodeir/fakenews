@@ -110,12 +110,12 @@ class FakeNewsProcessor(DataProcessor):
             date = row[2]
             claim_id = row[3]
             label = row[4]
-            articles = row[5]
+            article_ids = row[5]
 
             # date_str = date.strftime("%B %d, %Y")
             text_a = claimant + ' : ' + claim 
             articles = []
-            for article_id in articles:
+            for article_id in article_ids:
                 articles_path = os.path.join(
                     data_dir,
                     f'train_articles/{article_id}.txt')
