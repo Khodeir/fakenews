@@ -67,7 +67,7 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "train_split_dupd.json")
+        return self._create_examples(data_dir, "small.json")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
@@ -143,7 +143,10 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
 
         if ex_index % 10000 == 0:
             logger.info("Writing claim example %d of %d" % (ex_index, len(examples)))
-        
+        if ex_index < 5:
+            also_print = True
+        else:
+            also_print = False
         article_features = _article_examples_to_features(
             example.articles, label_list, max_seq_length,
             tokenizer, output_mode,
@@ -152,7 +155,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
             sequence_a_segment_id, sequence_b_segment_id,
             cls_token_segment_id, pad_token_segment_id,
             mask_padding_with_zero,
-            also_print=ex_index < 5)
+            also_print=also_print)
         
         label_id = label_map[example.label]
 
@@ -162,7 +165,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
                 label_id=label_id,
                 guid=example.guid))
 
-        return features
+    return features
 
 
 def _article_examples_to_features(examples, label_list, max_seq_length,

@@ -13,7 +13,7 @@ python run_lang_model.py \
 --per_gpu_train_batch_size=1 \
 --per_gpu_eval_batch_size=1 \
 --num_train_epochs=3.0 \
---logging_steps=100 \
+--logging_steps=50 \
 --save_steps=500 \
 --learning_rate=2e-5 \
 --run_name=runs/multi_article_cased_2e-5
