@@ -21,11 +21,11 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
         # input_ids was meant to be (batch_size, max_seq_length)
         # hack it to be (num_articles, max_seq_length)
         input_ids = input_ids[0]
-        token_type_ids = token_type_ids[0] if token_type_ids else None
-        attention_mask = attention_mask[0] if attention_mask else None
+        token_type_ids = token_type_ids[0] if token_type_ids is not None else None
+        attention_mask = attention_mask[0] if attention_mask is not None else None
         # labels dim is fine as is
-        position_ids = position_ids[0] if position_ids else None
-        head_mask = head_mask[0] if head_mask else None
+        position_ids = position_ids[0] if position_ids is not None else None
+        head_mask = head_mask[0] if head_mask is not None else None
         outputs = self.bert(input_ids, position_ids=position_ids, token_type_ids=token_type_ids,
                             attention_mask=attention_mask, head_mask=head_mask)
         pooled_outputs = outputs[1]
