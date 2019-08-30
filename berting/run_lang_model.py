@@ -261,10 +261,10 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
             list(filter(None, args.model_name_or_path.split('/'))).pop(),
             str(args.max_seq_length),
             str(task)))
-        if False and os.path.exists(cached_features_file):
-            #logger.info("Loading features from cached file %s", cached_features_file)
-            #features = torch.load(cached_features_file)
-            print('Shouldnt be here!!!!')
+        if os.path.exists(cached_features_file):
+            logger.info("Loading features from cached file %s", cached_features_file)
+            features = torch.load(cached_features_file)
+            #print('Shouldnt be here!!!!')
         else:
             logger.info("Creating features from dataset file at %s", args.data_dir)
             label_list = processor.get_labels()
@@ -276,9 +276,9 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False, test=False):
                 cls_token_segment_id=2 if args.model_type in ['xlnet'] else 0,
                 pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
                 pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
-            #if args.local_rank in [-1, 0]:
-                #logger.info("Saving features into cached file %s", cached_features_file)
-                #torch.save(features, cached_features_file)
+            if args.local_rank in [-1, 0]:
+                logger.info("Saving features into cached file %s", cached_features_file)
+                torch.save(features, cached_features_file)
 
     # Convert to Tensors and build dataset
     dataset = FakeNewsDataset(features)

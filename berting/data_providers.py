@@ -363,10 +363,10 @@ class FakeNewsDataset(Dataset):
     def __getitem__(self, idx):
         feature = self.features[idx]
         afs = feature.article_features
-        # Cap at 9 articles per claim?
-        all_input_ids = torch.tensor([f.input_ids for f in afs[:9]], dtype=torch.long)
-        all_input_mask = torch.tensor([f.input_mask for f in afs[:9]], dtype=torch.long)
-        all_segment_ids = torch.tensor([f.segment_ids for f in afs[:9]], dtype=torch.long)
+        # Cap at 8 articles per claim?
+        all_input_ids = torch.tensor([f.input_ids for f in afs[:8]], dtype=torch.long)
+        all_input_mask = torch.tensor([f.input_mask for f in afs[:8]], dtype=torch.long)
+        all_segment_ids = torch.tensor([f.segment_ids for f in afs[:8]], dtype=torch.long)
         label_id = torch.tensor(feature.label_id, dtype=torch.long)
         guid = feature.guid
         return (all_input_ids, all_input_mask, all_segment_ids, label_id, guid)
