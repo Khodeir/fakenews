@@ -67,7 +67,7 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "small.json")
+        return self._create_examples(data_dir, "train_split_dupd.json")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
