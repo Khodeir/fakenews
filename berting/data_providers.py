@@ -110,8 +110,8 @@ class FakeNewsProcessor(DataProcessor):
             with open(articles_condensed_path) as f:
                 txt = f.read()
             
-            date_str = date.strftime("%B %d, %Y")
-            text_a = claimant + ' ' + date_str + ' : ' + claim 
+            # date_str = date.strftime("%B %d, %Y")
+            text_a = claimant + ' : ' + claim 
 
             examples.append(
                 InputExample(guid=claim_id, text_a=text_a, text_b=txt, label=label))
