@@ -1,6 +1,6 @@
 numpy==1.15.4
 pandas==0.24.2
 torch==1.1.0
-pytorch-transformers==1.0.0
+pytorch-transformers==1.1.0
 tqdm
 sklearn

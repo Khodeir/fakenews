@@ -49,7 +49,6 @@ python run_glue.py \
 docker run --gpus all -v /home/ubuntu/dataset/:/usr/local/dataset/:ro --name fakenews ava
 
 python do_inference.py \
---data_file=/home/ubuntu/dataset/metadata.json \
+--data_dir=/home/ubuntu/dataset \
 --model_dir=/home/ubuntu/docker_submission \
---article_dir=/home/ubuntu/dataset/articles \
 --output_file_path=/home/ubuntu/dataset/predictions.txt \
