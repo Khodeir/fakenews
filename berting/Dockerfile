@@ -130,12 +130,10 @@ WORKDIR /usr/src/
 
 COPY ./requirements.txt /usr/src/
 
-RUN mkdir /usr/src/condensed_articles \
-    && apt-get update \
+RUN apt-get update \
     && apt-get install -y --no-install-recommends gcc libc-dev\
     && rm -rf /var/lib/apt/lists/* \
     && pip install -r requirements.txt \
-    && python -m spacy download en_core_web_md \
     && apt-get purge -y --auto-remove gcc libc-dev
 
 # Copy the current directory contents into the container at /app
