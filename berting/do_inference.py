@@ -41,6 +41,9 @@ output_mode = output_modes[args.task_name]
 label_list = processor.get_labels()
 num_labels = len(label_list)
 
+args.model_type = args.model_type.lower()
+config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
+
 config = config_class.from_pretrained(f'{args.model_dir}/multi_article_cased_2e-5', num_labels=num_labels, finetuning_task=args.task_name)
 tokenizer = tokenizer_class.from_pretrained(f'{args.model_dir}/multi_article_cased_2e-5', do_lower_case=False)
 model = model_class.from_pretrained(f'{args.model_dir}/multi_article_cased_2e-5', config=config)
