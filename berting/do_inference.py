@@ -11,12 +11,10 @@ from data_providers import (convert_examples_to_features,
                             output_modes, processors, FakeNewsDataset)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_file", default='/usr/local/dataset/metadata.json', type=str, required=False,
+parser.add_argument("--data_dir", default='/usr/local/dataset', type=str, required=False,
                     help="Path to json file with claim id, claim, and article ids.")
 parser.add_argument("--model_dir", default='/usr/src', type=str, required=False,
                     help="Path to pretrained model.")
-parser.add_argument("--article_dir", default='/usr/local/dataset/articles', type=str, required=False,
-                    help="Path to dir for articles.")
 parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=False,
                     help="File path for output file.")
 parser.add_argument("--per_gpu_eval_batch_size", default=1, type=int, required=False,

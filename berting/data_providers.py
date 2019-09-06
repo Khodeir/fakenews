@@ -73,26 +73,35 @@ class FakeNewsProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(data_dir, "dev_split.json")
     
-    def get_test_examples(self, data_file, condensed_dir):
+    def get_test_examples(self, data_dir):
         """Creates test examples for inference."""
-        raise NotImplementedError()
-        '''
         examples = []
-        df = pd.read_json(data_file)
+        path = os.path.join(data_dir, 'metadata.json')
+        df = pd.read_json(path)
         for (_, row) in df.iterrows():
             claim = row[0]
+            claimant = row[1]
+            date = row[2]
             claim_id = row[3]
-            
-            articles_condensed_path = os.path.join(
-                condensed_dir,
-                f'{claim_id}_top20_txt.txt')
-            with open(articles_condensed_path) as f:
-                txt = f.read()
+            label = 0 # placeholder
+            article_ids = row[5]
+
+            # date_str = date.strftime("%B %d, %Y")
+            text_a = claimant + ' : ' + claim 
+            articles = []
+            for article_id in article_ids:
+                articles_path = os.path.join(
+                    data_dir,
+                    f'articles/{article_id}.txt')
+                with open(articles_path) as f:
+                    txt = f.read()
+                article_example = ArticleInputExample(
+                    article_id=article_id, text_a=text_a, text_b=txt, label=label)
+                articles.append(article_example)
 
             examples.append(
-                InputExample(guid=claim_id, text_a=claim, text_b=txt, label=0))
+                InputExample(guid=claim_id, text_a=text_a, articles=articles, label=label))
         return examples
-        '''
 
 
     def get_labels(self):
