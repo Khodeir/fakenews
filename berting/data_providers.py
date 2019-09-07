@@ -127,7 +127,7 @@ class FakeNewsProcessor(DataProcessor):
             for article_id in article_ids:
                 articles_path = os.path.join(
                     data_dir,
-                    f'articles_top20_sorted/{article_id}.txt')
+                    f'train_articles/{article_id}.txt')
                 with open(articles_path) as f:
                     txt = f.read()
                 article_example = ArticleInputExample(
