@@ -31,12 +31,13 @@ class InputExample(object):
 
 class ArticleInputFeatures(object):
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, article_id):
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, article_id, tokens):
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
         self.label_id = label_id
         self.article_id = article_id
+        self.tokens = tokens
 
 class InputFeatures(object):
 
@@ -287,7 +288,10 @@ def _article_examples_to_features(examples, label_list, max_seq_length,
                 input_mask=input_mask,
                 segment_ids=segment_ids,
                 label_id=label_id,
-                article_id=example.article_id))
+                article_id=example.article_id,
+                tokens=tokens
+            )
+        )
     return features
 
 
