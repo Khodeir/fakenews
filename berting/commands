@@ -21,12 +21,12 @@ python run_lang_model.py \
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \
 --model_type=bert \
---model_name_or_path=/home/ubuntu/results/condensed_v3_claimant_cased_2e-5 \
+--model_name_or_path=/home/ubuntu/results/multi_article_cased_2e-5_6epochs \
 --task_name=fn \
---output_dir=/home/ubuntu/results/condensed_v3_claimant_cased_2e-5 \
+--output_dir=/home/ubuntu/results/multi_article_cased_2e-5_6epochs \
 --max_seq_length=512 \
 --do_test \
---per_gpu_eval_batch_size=128 \
+--per_gpu_eval_batch_size=1 \
 
 python run_glue.py \
   --task_name=sts-b \
@@ -47,6 +47,10 @@ python run_glue.py \
 
 
 docker run --gpus all -v /home/ubuntu/dataset/:/usr/local/dataset/:ro --name fakenews ava
+
+nvidia-docker run \
+-v /home/ubuntu/dataset/:/usr/local/dataset/:ro \
+--name submission_container -e LANG=C.UTF-8 --net=none ava
 
 python do_inference.py \
 --data_dir=/home/ubuntu/dataset \

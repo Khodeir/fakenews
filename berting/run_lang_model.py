@@ -497,7 +497,8 @@ def main():
                 if args.output_mode == "classification":
                     pred = np.argmax(logits_ex)
                 elif args.output_mode == "regression":
-                    pred = np.squeeze(logits_ex)
+                    #pred = np.squeeze(logits_ex)
+                    raise ValueError('Should not be doing regression!')
                 row = {
                     'claim_id':  claim_id,
                     'logits': logits_ex,
