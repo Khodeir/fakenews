@@ -68,11 +68,11 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "train_split_dupd.json")
+        return self._create_examples(data_dir, "train_split_01.json")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "dev_split.json")
+        return self._create_examples(data_dir, "dev_split_01.json")
     
     def get_test_examples(self, data_dir):
         """Creates test examples for inference."""
@@ -107,7 +107,7 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_labels(self):
         """See base class."""
-        return [0, 1, 2]
+        return [0, 1]
 
     def _create_examples(self, data_dir, file_name):
         """Creates examples for the training and dev sets."""
