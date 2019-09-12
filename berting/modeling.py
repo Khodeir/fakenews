@@ -36,7 +36,8 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
 
         outputs = (logits,) 
         if labels is not None:
-            loss_fct = CrossEntropyLoss()
+            #loss_fct = CrossEntropyLoss(weight=torch.tensor([0.692920, 0.795714, 3.026621]).to('cuda'))
+            loss_fct = CrossEntropyLoss(weight=torch.tensor([0.795714, 3.026621]).to('cuda'))
             loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             outputs = (loss,) + outputs
 
