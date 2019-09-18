@@ -1,10 +1,7 @@
-import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
 from pytorch_transformers import BertPreTrainedModel, BertModel
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class BertForMultiSequenceClassification(BertPreTrainedModel):
 
@@ -38,9 +35,7 @@ class BertForMultiSequenceClassification(BertPreTrainedModel):
 
         outputs = (logits,) 
         if labels is not None:
-            loss_fct = CrossEntropyLoss(
-                weight=torch.tensor([0.692920, 0.795714, 3.026621]).to(device)
-            )
+            loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             outputs = (loss,) + outputs
 
