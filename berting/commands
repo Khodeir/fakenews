@@ -1,9 +1,9 @@
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \
 --model_type=bert \
---model_name_or_path=/home/ubuntu/results/multi_article_cased_2e-5 \
+--model_name_or_path=bert-base-cased \
 --task_name=fn \
---output_dir=/home/ubuntu/results/multi_article_cased_2e-5_6epochs \
+--output_dir=/home/ubuntu/results/multi_article_all_train \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -16,7 +16,7 @@ python run_lang_model.py \
 --logging_steps=100 \
 --save_steps=500 \
 --learning_rate=2e-5 \
---run_name=runs/multi_article_cased_2e-5_6epochs
+--run_name=runs/multi_article_all_train
 
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \
