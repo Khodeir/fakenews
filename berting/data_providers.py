@@ -80,12 +80,12 @@ class FakeNewsProcessor(DataProcessor):
         path = os.path.join(data_dir, 'metadata.json')
         df = pd.read_json(path)
         for (_, row) in df.iterrows():
-            claim = row[0]
-            claimant = row[1]
-            date = row[2]
-            claim_id = row[3]
+            claim = row['claim']
+            claimant = row['claimant']
+            date = row['date']
+            claim_id = row['id']
             label = 0 # placeholder
-            article_ids = row[5]
+            article_ids = row['related_articles']
 
             # date_str = date.strftime("%B %d, %Y")
             text_a = claimant + ' : ' + claim 
@@ -115,12 +115,12 @@ class FakeNewsProcessor(DataProcessor):
         path = os.path.join(data_dir, file_name)
         df = pd.read_json(path)
         for (_, row) in df.iterrows():
-            claim = row[0]
-            claimant = row[1]
-            date = row[2]
-            claim_id = row[3]
-            label = row[4]
-            article_ids = row[5]
+            claim = row['claim']
+            claimant = row['claimant']
+            date = row['date']
+            claim_id = row['id']
+            label = row['label']
+            article_ids = row['related_articles']
 
             # date_str = date.strftime("%B %d, %Y")
             text_a = claimant + ' : ' + claim 
