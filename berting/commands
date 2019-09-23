@@ -52,7 +52,7 @@ nvidia-docker run \
 -v /home/ubuntu/dataset/:/usr/local/dataset/:ro \
 --name submission_container -e LANG=C.UTF-8 --net=none ava
 
-docker save -o ava3.tar ava
+docker save -o ava.tar ava
 docker load --input ava3.tar
 docker cp submission_container:/usr/local/predictions.txt .
 
