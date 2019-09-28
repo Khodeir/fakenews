@@ -31,13 +31,11 @@ class InputExample(object):
 
 class ArticleInputFeatures(object):
 
-    def __init__(self, input_ids, input_mask, segment_ids, label_id, article_id, tokens):
+    def __init__(self, input_ids, attention_mask, token_type_ids, article_id):
         self.input_ids = input_ids
-        self.input_mask = input_mask
-        self.segment_ids = segment_ids
-        self.label_id = label_id
+        self.attention_mask = attention_mask
+        self.token_type_ids = token_type_ids
         self.article_id = article_id
-        self.tokens = tokens
 
 class InputFeatures(object):
 
@@ -139,14 +137,26 @@ class FakeNewsProcessor(DataProcessor):
                 InputExample(guid=claim_id, text_a=text_a, articles=articles, label=label))
         return examples
 
-def convert_examples_to_features(examples, label_list, max_seq_length,
-                                 tokenizer, output_mode,
-                                 cls_token_at_end=False, pad_on_left=False,cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
-                                 sequence_a_segment_id=0, sequence_b_segment_id=1,
-                                 cls_token_segment_id=0, pad_token_segment_id=0,
+def convert_examples_to_features(examples, tokenizer,
+                                 max_length=512,
+                                 task='fn',
+                                 label_list=None,
+                                 output_mode=None,
+                                 pad_on_left=False,
+                                 pad_token=0,
+                                 pad_token_segment_id=0,
                                  mask_padding_with_zero=True):
 
-    label_map = {label : i for i, label in enumerate(label_list)}
+    if task is not None:
+        processor = processors[task]()
+        if label_list is None:
+            label_list = processor.get_labels()
+            logger.info("Using label list %s for task %s" % (label_list, task))
+        if output_mode is None:
+            output_mode = output_modes[task]
+            logger.info("Using output mode %s for task %s" % (output_mode, task))
+
+    label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
     for (ex_index, example) in enumerate(examples):
@@ -158,16 +168,23 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
         else:
             also_print = False
         article_features = _article_examples_to_features(
-            example.articles, label_list, max_seq_length,
-            tokenizer, output_mode,
-            cls_token_at_end, pad_on_left,
-            cls_token, sep_token, pad_token,
-            sequence_a_segment_id, sequence_b_segment_id,
-            cls_token_segment_id, pad_token_segment_id,
-            mask_padding_with_zero,
-            also_print=also_print)
+                            example.articles, tokenizer,
+                            max_length,
+                            pad_on_left,
+                            pad_token,
+                            pad_token_segment_id,
+                            mask_padding_with_zero,
+                            also_print=also_print)
         
-        label_id = label_map[example.label]
+        if output_mode == "classification":
+            label_id = label_map[example.label]
+        elif output_mode == "regression":
+            label_id = float(example.label)
+        else:
+            raise KeyError(output_mode)
+
+        if ex_index < 5:
+            logger.info("claim_id: %s, label: %s (id = %d)" % (example.guid, example.label, label_id))
 
         features.append(
             InputFeatures(
@@ -177,8 +194,85 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
 
     return features
 
+def _article_examples_to_features(examples, tokenizer,
+                                  max_length=512,
+                                  pad_on_left=False,
+                                  pad_token=0,
+                                  pad_token_segment_id=0,
+                                  mask_padding_with_zero=True,
+                                  also_print=False):
+    """
+    Loads a data file into a list of ``InputFeatures``
 
-def _article_examples_to_features(examples, label_list, max_seq_length,
+    Args:
+        examples: List of ``InputExamples`` or ``tf.data.Dataset`` containing the examples.
+        tokenizer: Instance of a tokenizer that will tokenize the examples
+        max_length: Maximum example length
+        task: GLUE task
+        label_list: List of labels. Can be obtained from the processor using the ``processor.get_labels()`` method
+        output_mode: String indicating the output mode. Either ``regression`` or ``classification``
+        pad_on_left: If set to ``True``, the examples will be padded on the left rather than on the right (default)
+        pad_token: Padding token
+        pad_token_segment_id: The segment ID for the padding token (It is usually 0, but can vary such as for XLNet where it is 4)
+        mask_padding_with_zero: If set to ``True``, the attention mask will be filled by ``1`` for actual values
+            and by ``0`` for padded values. If set to ``False``, inverts it (``1`` for padded values, ``0`` for
+            actual values)
+
+    Returns:
+        If the ``examples`` input is a ``tf.data.Dataset``, will return a ``tf.data.Dataset``
+        containing the task-specific features. If the input is a list of ``InputExamples``, will return
+        a list of task-specific ``InputFeatures`` which can be fed to the model.
+
+    """
+
+    features = []
+    for (ex_index, example) in enumerate(examples):
+        inputs = tokenizer.encode_plus(
+            example.text_a,
+            example.text_b,
+            add_special_tokens=True,
+            max_length=max_length,
+            truncate_first_sequence=False  # We're truncating the SECOND sequence in priority
+        )
+        input_ids, token_type_ids = inputs["input_ids"], inputs["token_type_ids"]
+
+        # The mask has 1 for real tokens and 0 for padding tokens. Only real
+        # tokens are attended to.
+        attention_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
+
+        # Zero-pad up to the sequence length.
+        padding_length = max_length - len(input_ids)
+        if pad_on_left:
+            input_ids = ([pad_token] * padding_length) + input_ids
+            attention_mask = ([0 if mask_padding_with_zero else 1] * padding_length) + attention_mask
+            token_type_ids = ([pad_token_segment_id] * padding_length) + token_type_ids
+        else:
+            input_ids = input_ids + ([pad_token] * padding_length)
+            attention_mask = attention_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
+            token_type_ids = token_type_ids + ([pad_token_segment_id] * padding_length)
+
+        assert len(input_ids) == max_length, "Error with input length {} vs {}".format(len(input_ids), max_length)
+        assert len(attention_mask) == max_length, "Error with input length {} vs {}".format(len(attention_mask), max_length)
+        assert len(token_type_ids) == max_length, "Error with input length {} vs {}".format(len(token_type_ids), max_length)
+
+        if also_print:
+            logger.info("*** Article Example ***")
+            logger.info("article_id: %s" % (example.article_id))
+            logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
+            logger.info("attention_mask: %s" % " ".join([str(x) for x in attention_mask]))
+            logger.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
+        features.append(
+            ArticleInputFeatures(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                token_type_ids=token_type_ids,
+                article_id=example.article_id
+            )
+        )
+
+    return features
+'''
+def OLD_article_examples_to_features(examples, label_list, max_seq_length,
                                   tokenizer, output_mode,
                                   cls_token_at_end=False, pad_on_left=False,
                                   cls_token='[CLS]', sep_token='[SEP]', pad_token=0,
@@ -293,7 +387,7 @@ def _article_examples_to_features(examples, label_list, max_seq_length,
             )
         )
     return features
-
+'''
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
@@ -381,8 +475,8 @@ class FakeNewsDataset(Dataset):
         afs = feature.article_features
         # Cap at 8 articles per claim?
         all_input_ids = torch.tensor([f.input_ids for f in afs[:8]], dtype=torch.long)
-        all_input_mask = torch.tensor([f.input_mask for f in afs[:8]], dtype=torch.long)
-        all_segment_ids = torch.tensor([f.segment_ids for f in afs[:8]], dtype=torch.long)
+        all_input_mask = torch.tensor([f.attention_mask for f in afs[:8]], dtype=torch.long)
+        all_segment_ids = torch.tensor([f.token_type_ids for f in afs[:8]], dtype=torch.long)
         label_id = torch.tensor(feature.label_id, dtype=torch.long)
         guid = feature.guid
         return (all_input_ids, all_input_mask, all_segment_ids, label_id, guid)

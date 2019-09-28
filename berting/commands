@@ -21,9 +21,9 @@ python run_lang_model.py \
 python run_lang_model.py \
 --data_dir=/home/ubuntu/fakenews/data/train \
 --model_type=bert \
---model_name_or_path=/home/ubuntu/results/multi_article_cased_2e-5_6epochs \
+--model_name_or_path=/home/ubuntu/results/multi_article_cased_2e-5 \
 --task_name=fn \
---output_dir=/home/ubuntu/results/multi_article_cased_2e-5_6epochs \
+--output_dir=/home/ubuntu/results/multi_article_cased_2e-5 \
 --max_seq_length=512 \
 --do_test \
 --per_gpu_eval_batch_size=1 \
