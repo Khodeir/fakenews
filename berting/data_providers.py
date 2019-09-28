@@ -250,11 +250,15 @@ def _article_examples_to_features(examples, tokenizer,
             input_ids = input_ids + ([pad_token] * padding_length)
             attention_mask = attention_mask + ([0 if mask_padding_with_zero else 1] * padding_length)
             token_type_ids = token_type_ids + ([pad_token_segment_id] * padding_length)
-
-        assert len(input_ids) == max_length, "Error with input length {} vs {}".format(len(input_ids), max_length)
-        assert len(attention_mask) == max_length, "Error with input length {} vs {}".format(len(attention_mask), max_length)
-        assert len(token_type_ids) == max_length, "Error with input length {} vs {}".format(len(token_type_ids), max_length)
-
+        try: 
+            assert len(input_ids) == max_length, "Error with input length {} vs {}".format(len(input_ids), max_length)
+            assert len(attention_mask) == max_length, "Error with input length {} vs {}".format(len(attention_mask), max_length)
+            assert len(token_type_ids) == max_length, "Error with input length {} vs {}".format(len(token_type_ids), max_length)
+        except Exception as e:
+            print(f'Length ERROR! article id is {example.article_id}')
+            print(f'text a is {example.text_a}')
+            print(f'text b is {example.text_b}')
+            raise e
         if also_print:
             logger.info("*** Article Example ***")
             logger.info("article_id: %s" % (example.article_id))
