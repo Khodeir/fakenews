@@ -13,14 +13,14 @@ from torch.utils.data.distributed import DistributedSampler
 from tensorboardX import SummaryWriter
 from tqdm import tqdm, trange
 
-from pytorch_transformers import (WEIGHTS_NAME, BertConfig, BertTokenizer,
+from transformers import (WEIGHTS_NAME, BertConfig, BertTokenizer,
                         RobertaConfig,
                         RobertaTokenizer,
                         XLNetConfig,
                         XLNetForSequenceClassification,
                         XLNetTokenizer)
 
-from pytorch_transformers import AdamW, WarmupLinearSchedule
+from transformers import AdamW, WarmupLinearSchedule
 
 from modeling import BertForMultiSequenceClassification, RobertaForMultiSequenceClassification
 
