@@ -72,6 +72,13 @@ class FakeNewsProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(data_dir, "dev_split.json")
     
+    def truncate_to_example(self, claim):
+        start = claim.find('See\xa0Example(s)')
+        if start == -1:
+            return claim
+        else:
+            return claim[:start].strip()
+    
     def get_test_examples(self, data_dir):
         """Creates test examples for inference."""
         examples = []
@@ -86,14 +93,16 @@ class FakeNewsProcessor(DataProcessor):
             article_ids = row['related_articles']
 
             # date_str = date.strftime("%B %d, %Y")
-            text_a = claimant + ' : ' + claim 
+            claim = self.truncate_to_example(claim)
+            text_a = claimant + ' : ' + claim
+            text_a = text_a[:500].strip() 
             articles = []
             for article_id in article_ids:
                 articles_path = os.path.join(
                     data_dir,
                     f'articles/{article_id}.txt')
                 with open(articles_path) as f:
-                    txt = f.read()
+                    txt = f.read().strip()
                 article_example = ArticleInputExample(
                     article_id=article_id, text_a=text_a, text_b=txt, label=label)
                 articles.append(article_example)
@@ -121,14 +130,16 @@ class FakeNewsProcessor(DataProcessor):
             article_ids = row['related_articles']
 
             # date_str = date.strftime("%B %d, %Y")
-            text_a = claimant + ' : ' + claim 
+            claim = self.truncate_to_example(claim)
+            text_a = claimant + ' : ' + claim
+            text_a = text_a[:500].strip()  
             articles = []
             for article_id in article_ids:
                 articles_path = os.path.join(
                     data_dir,
                     f'train_articles/{article_id}.txt')
                 with open(articles_path) as f:
-                    txt = f.read()
+                    txt = f.read().strip()
                 article_example = ArticleInputExample(
                     article_id=article_id, text_a=text_a, text_b=txt, label=label)
                 articles.append(article_example)

@@ -1,14 +1,14 @@
 python run_lang_model.py \
---data_dir=/home/bill/fakenews/data/train \
+--data_dir=/home/billwuyu_gmail_com/fakenews/data/train \
 --model_type=roberta \
 --model_name_or_path=roberta-base \
 --task_name=fn \
---output_dir=/home/bill/results/multi_article_roberta \
+--output_dir=/home/billwuyu_gmail_com/results/multi_article_roberta \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
 --gradient_accumulation_steps=32 \
---cache_dir=/home/bill/pretrained_models \
+--cache_dir=/home/billwuyu_gmail_com/pretrained_models \
 --overwrite_output_dir \
 --per_gpu_train_batch_size=1 \
 --per_gpu_eval_batch_size=1 \
@@ -19,11 +19,11 @@ python run_lang_model.py \
 --run_name=runs/multi_article_roberta
 
 python run_lang_model.py \
---data_dir=/home/bill/fakenews/data/train \
+--data_dir=/home/billwuyu_gmail_com/fakenews/data/train \
 --model_type=bert \
---model_name_or_path=/home/bill/results/multi_article_cased_2e-5 \
+--model_name_or_path=/home/billwuyu_gmail_com/results/multi_article_cased_2e-5 \
 --task_name=fn \
---output_dir=/home/bill/results/multi_article_cased_2e-5 \
+--output_dir=/home/billwuyu_gmail_com/results/multi_article_cased_2e-5 \
 --max_seq_length=512 \
 --do_test \
 --per_gpu_eval_batch_size=1 \
@@ -34,7 +34,7 @@ python run_glue.py \
   --do_eval \
   --do_lower_case \
   --model_type=bert \
-  --data_dir=/home/bill/glue_data/STS-B \
+  --data_dir=/home/billwuyu_gmail_com/glue_data/STS-B \
   --model_name_or_path=bert-base-uncased \
   --max_seq_length=128 \
   --per_gpu_train_batch_size=32 \
@@ -42,14 +42,14 @@ python run_glue.py \
   --learning_rate=2e-5 \
   --num_train_epochs=3.0 \
   --save_steps=100 \
-  --output_dir=/home/bill/results/bert_base_uncased_sts-b \
-  --cache_dir=/home/bill/pretrained_models \
+  --output_dir=/home/billwuyu_gmail_com/results/bert_base_uncased_sts-b \
+  --cache_dir=/home/billwuyu_gmail_com/pretrained_models \
 
 
-docker run --gpus all -v /home/bill/dataset/:/usr/local/dataset/:ro --name fakenews ava
+docker run --gpus all -v /home/billwuyu_gmail_com/dataset/:/usr/local/dataset/:ro --name fakenews ava
 
 nvidia-docker run \
--v /home/bill/dataset/:/usr/local/dataset/:ro \
+-v /home/billwuyu_gmail_com/dataset/:/usr/local/dataset/:ro \
 --name submission_container -e LANG=C.UTF-8 --net=none ava
 
 docker save -o ava.tar ava
@@ -57,6 +57,6 @@ docker load --input ava3.tar
 docker cp submission_container:/usr/local/predictions.txt .
 
 python do_inference.py \
---data_dir=/home/bill/dataset \
---model_dir=/home/bill/docker_submission \
---output_file_path=/home/bill/dataset/predictions.txt \
+--data_dir=/home/billwuyu_gmail_com/dataset \
+--model_dir=/home/billwuyu_gmail_com/docker_submission \
+--output_file_path=/home/billwuyu_gmail_com/dataset/predictions.txt \
