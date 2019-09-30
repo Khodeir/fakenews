@@ -81,7 +81,7 @@ for batch in tqdm(test_dataloader, desc="Testing"):
     with torch.no_grad():
         inputs = {'input_ids':      batch[0],
                   'attention_mask': batch[1],
-                  'token_type_ids': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM don't use segment_ids 
+                  'token_type_ids': batch[2] if args.model_type in ['bert', 'xlnet'] else None,  # XLM, Roberta don't use segment_ids 
                  }
         outputs = model(**inputs)
         logits = outputs[0]

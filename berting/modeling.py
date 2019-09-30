@@ -64,6 +64,7 @@ class RobertaCustomClassificationHead(nn.Module):
         x = self.out_proj(x)
         return x
 
+
 class RobertaForMultiSequenceClassification(BertPreTrainedModel):
     config_class = RobertaConfig
     pretrained_model_archive_map = ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP
