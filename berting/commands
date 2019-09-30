@@ -8,7 +8,6 @@ python run_lang_model.py \
 --do_train \
 --evaluate_during_training \
 --gradient_accumulation_steps=32 \
---cache_dir=/home/billwuyu_gmail_com/pretrained_models \
 --overwrite_output_dir \
 --per_gpu_train_batch_size=1 \
 --per_gpu_eval_batch_size=1 \

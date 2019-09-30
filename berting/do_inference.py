@@ -4,8 +4,8 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import argparse
-from pytorch_transformers import (BertConfig, BertTokenizer)
-from modeling import BertForMultiSequenceClassification
+from transformers import (RobertaConfig, RobertaTokenizer)
+from modeling import RobertaForMultiSequenceClassification
 
 from data_providers import (convert_examples_to_features,
                             output_modes, processors, FakeNewsDataset)
@@ -21,13 +21,13 @@ parser.add_argument("--per_gpu_eval_batch_size", default=1, type=int, required=F
                     help="Batch size per GPU/CPU for evaluation.")
 parser.add_argument("--max_seq_length", default=512, type=int, required=False,
                     help="Max sequence length for inference.")
-parser.add_argument("--model_type", default='bert', type=str, required=False,
+parser.add_argument("--model_type", default='roberta', type=str, required=False,
                     help="Model type.")
 
 args = parser.parse_args()
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertForMultiSequenceClassification, BertTokenizer),
+    'roberta': (RobertaConfig, RobertaForMultiSequenceClassification, RobertaTokenizer),
 }
 
 # Prepare data
@@ -42,21 +42,23 @@ num_labels = len(label_list)
 args.model_type = args.model_type.lower()
 config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
 
-config = config_class.from_pretrained(f'{args.model_dir}/multi_article_all_train_dupd', num_labels=num_labels, finetuning_task=args.task_name)
-tokenizer = tokenizer_class.from_pretrained(f'{args.model_dir}/multi_article_all_train_dupd', do_lower_case=False)
-model = model_class.from_pretrained(f'{args.model_dir}/multi_article_all_train_dupd', config=config)
+config = config_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', num_labels=num_labels, finetuning_task=args.task_name)
+tokenizer = tokenizer_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', do_lower_case=False)
+model = model_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', config=config)
 model.eval()
 model = model.to('cuda')
 
 def load_and_cache_examples(args, tokenizer, processor, output_mode, label_list):
     examples = processor.get_test_examples(args.data_dir)
-    features = convert_examples_to_features(examples, label_list, args.max_seq_length, tokenizer, output_mode,
-        cls_token_at_end=bool(args.model_type in ['xlnet']),            # xlnet has a cls token at the end
-        cls_token=tokenizer.cls_token,
-        sep_token=tokenizer.sep_token,
-        cls_token_segment_id=2 if args.model_type in ['xlnet'] else 0,
-        pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
-        pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0)
+    features = convert_examples_to_features(examples,
+                                            tokenizer,
+                                            label_list=label_list,
+                                            max_length=args.max_seq_length,
+                                            output_mode=output_mode,
+                                            pad_on_left=bool(args.model_type in ['xlnet']),                 # pad on the left for xlnet
+                                            pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
+                                            pad_token_segment_id=4 if args.model_type in ['xlnet'] else 0,
+    )
     dataset = FakeNewsDataset(features)
     return dataset
 
