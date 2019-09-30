@@ -51,6 +51,7 @@ nvidia-docker run \
 -v /home/billwuyu_gmail_com/dataset/:/usr/local/dataset/:ro \
 --name submission_container -e LANG=C.UTF-8 --net=none ava
 
+docker build -t ava .
 docker save -o ava.tar ava
 docker load --input ava3.tar
 docker cp submission_container:/usr/local/predictions.txt .
@@ -58,4 +59,4 @@ docker cp submission_container:/usr/local/predictions.txt .
 python do_inference.py \
 --data_dir=/home/billwuyu_gmail_com/dataset \
 --model_dir=/home/billwuyu_gmail_com/docker_submission \
---output_file_path=/home/billwuyu_gmail_com/dataset/predictions.txt \
+--output_file_path=/home/billwuyu_gmail_com/docker_submission/predictions.txt \
