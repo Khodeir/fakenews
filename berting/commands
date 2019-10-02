@@ -3,7 +3,7 @@ python run_lang_model.py \
 --model_type=roberta \
 --model_name_or_path=roberta-base \
 --task_name=fn \
---output_dir=/home/billwuyu_gmail_com/results/multi_article_roberta \
+--output_dir=/home/billwuyu_gmail_com/results/multi_article_roberta_v2split \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -14,8 +14,8 @@ python run_lang_model.py \
 --num_train_epochs=6.0 \
 --logging_steps=100 \
 --save_steps=500 \
---learning_rate=2e-5 \
---run_name=runs/multi_article_roberta
+--learning_rate=1e-5 \
+--run_name=runs/multi_article_roberta_v2split
 
 python run_lang_model.py \
 --data_dir=/home/billwuyu_gmail_com/fakenews/data/train \

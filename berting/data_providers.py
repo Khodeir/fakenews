@@ -66,11 +66,11 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "train_split_dupd.json")
+        return self._create_examples(data_dir, "train_split_v2_dupd.json")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "dev_split.json")
+        return self._create_examples(data_dir, "dev_split_v2.json")
     
     def truncate_to_example(self, claim):
         start = claim.find('See\xa0Example(s)')
