@@ -62,8 +62,8 @@ class RobertaCustomClassificationHead(nn.Module):
         #x = x.flatten()
         #x2 = torch.zeros(self.config.hidden_size * 8)
         #x2[:x.size(0)] = x
-        lstm_out, _ = self.lstm(x.view(len(x), 1, -1))
-        x2 = lstm_out[-1]
+        _, lstm_hidden = self.lstm(x.view(len(x), 1, -1))
+        x2 = lstm_hidden[-1]
         x2 = self.dropout(x2)
         x2 = self.dense(x2)
         x2 = torch.tanh(x2)
