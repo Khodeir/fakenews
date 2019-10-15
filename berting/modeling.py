@@ -49,21 +49,21 @@ class RobertaCustomClassificationHead(nn.Module):
 
     def __init__(self, config):
         super(RobertaCustomClassificationHead, self).__init__()
-        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.dense = nn.Linear(config.hidden_size * 8, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.out_proj = nn.Linear(config.hidden_size, config.num_labels)
-        #self.config = config
-        self.lstm = nn.LSTM(config.hidden_size, config.hidden_size)
+        self.config = config
+        #self.lstm = nn.LSTM(config.hidden_size, config.hidden_size)
 
     def forward(self, features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
         # should be size (num_articles, hidden)
         # x = x.mean(dim=-2) # avg cls representation across articles
-        #x = x.flatten()
-        #x2 = torch.zeros(self.config.hidden_size * 8)
-        #x2[:x.size(0)] = x
-        _, lstm_hidden = self.lstm(x.view(len(x), 1, -1))
-        x2 = lstm_hidden[-1]
+        x = x.flatten()
+        x2 = torch.zeros(self.config.hidden_size * 8)
+        x2[:x.size(0)] = x
+        #lstm_out, _ = self.lstm(x.view(len(x), 1, -1))
+        #x2 = lstm_out[-1]
         x2 = self.dropout(x2)
         x2 = self.dense(x2)
         x2 = torch.tanh(x2)
