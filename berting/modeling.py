@@ -6,6 +6,8 @@ from transformers import (BertPreTrainedModel, BertModel,
                           RobertaConfig, ROBERTA_PRETRAINED_MODEL_ARCHIVE_MAP,
                           RobertaModel)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 class BertForMultiSequenceClassification(BertPreTrainedModel):
 
     def __init__(self, config):
@@ -60,7 +62,7 @@ class RobertaCustomClassificationHead(nn.Module):
         # should be size (num_articles, hidden)
         # x = x.mean(dim=-2) # avg cls representation across articles
         x = x.flatten()
-        x2 = torch.zeros(self.config.hidden_size * 8)
+        x2 = torch.zeros(self.config.hidden_size * 8).to(device)
         x2[:x.size(0)] = x
         #lstm_out, _ = self.lstm(x.view(len(x), 1, -1))
         #x2 = lstm_out[-1]
