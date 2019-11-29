@@ -3,7 +3,7 @@ python run_lang_model.py \
 --model_type=roberta \
 --model_name_or_path=roberta-base \
 --task_name=fn \
---output_dir=/home/billwuyu_gmail_com/results/ma_rbta_v2_cat \
+--output_dir=/home/billwuyu_gmail_com/results/ma_rbta_full \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -12,10 +12,10 @@ python run_lang_model.py \
 --per_gpu_train_batch_size=1 \
 --per_gpu_eval_batch_size=1 \
 --num_train_epochs=6.0 \
---logging_steps=100 \
+--logging_steps=200 \
 --save_steps=500 \
---learning_rate=2e-5 \
---run_name=runs/ma_rbta_v2_cat
+--learning_rate=1e-5 \
+--run_name=runs/ma_rbta_full
 
 python run_lang_model.py \
 --data_dir=/home/billwuyu_gmail_com/fakenews/data/train \
