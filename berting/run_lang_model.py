@@ -16,24 +16,25 @@ from tqdm import tqdm, trange
 from transformers import (WEIGHTS_NAME, BertConfig, BertTokenizer,
                         RobertaConfig,
                         RobertaTokenizer,
-                        XLNetConfig,
-                        XLNetForSequenceClassification,
-                        XLNetTokenizer)
+                        AlbertConfig,
+                        AlbertTokenizer,)
 
-from transformers import AdamW, WarmupLinearSchedule
+from transformers import AdamW, get_linear_schedule_with_warmup
 
-from modeling import BertForMultiSequenceClassification, RobertaForMultiSequenceClassification
+from modeling import BertForMultiSequenceClassification, \
+                     RobertaForMultiSequenceClassification, \
+                     AlbertForMultiSequenceClassification
 
 from data_providers import (compute_metrics, convert_examples_to_features,
                             output_modes, processors, FakeNewsDataset)
 
 logger = logging.getLogger(__name__)
 
-ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, RobertaConfig)), ())
-
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, RobertaConfig, AlbertConfig)), ())
+                                                                    
 MODEL_CLASSES = {
     'bert': (BertConfig, BertForMultiSequenceClassification, BertTokenizer),
-    'xlnet': (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
+    'albert': (AlbertConfig, AlbertForMultiSequenceClassification, AlbertTokenizer),
     'roberta': (RobertaConfig, RobertaForMultiSequenceClassification, RobertaTokenizer),
 }
 
@@ -67,7 +68,7 @@ def train(args, train_dataset, model, tokenizer):
         {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-    scheduler = WarmupLinearSchedule(optimizer, warmup_steps=args.warmup_steps, t_total=t_total)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=args.warmup_steps, num_training_steps=t_total)
     if args.fp16:
         try:
             from apex import amp
@@ -101,7 +102,7 @@ def train(args, train_dataset, model, tokenizer):
                       'attention_mask': batch[1],
                       'labels':         batch[3]}
             if args.model_type != 'distilbert':
-                inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
+                inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet', 'albert'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
             outputs = model(**inputs)
             loss, logits = outputs[:2]  # model outputs are always tuple in pytorch-transformers (see doc)
 
@@ -211,7 +212,7 @@ def evaluate(args, model, tokenizer, prefix=""):
                           'attention_mask': batch[1],
                           'labels':         batch[3]}
                 if args.model_type != 'distilbert':
-                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
+                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet', 'albert'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
                 outputs = model(**inputs)
                 tmp_eval_loss, logits = outputs[:2]
 
@@ -501,7 +502,7 @@ def main():
                           'attention_mask': batch[1],
                          }
                 if args.model_type != 'distilbert':
-                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
+                    inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet', 'albert'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
             
                 outputs = model(**inputs)
                 logits = outputs[0]
