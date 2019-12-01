@@ -171,9 +171,8 @@ def convert_examples_to_features(examples, tokenizer,
 
     features = []
     for (ex_index, example) in enumerate(examples):
-
-        if ex_index % 10000 == 0:
-            logger.info("Writing claim example %d of %d" % (ex_index, len(examples)))
+        logger.info("Writing claim example %d of %d" % (ex_index, len(examples)))
+        
         if ex_index < 5:
             also_print = True
         else:
@@ -194,8 +193,7 @@ def convert_examples_to_features(examples, tokenizer,
         else:
             raise KeyError(output_mode)
 
-        if ex_index < 5:
-            logger.info("claim_id: %s, label: %s (id = %d)" % (example.guid, example.label, label_id))
+        logger.info("claim_id: %s, label: %s (id = %d)" % (example.guid, example.label, label_id))
 
         features.append(
             InputFeatures(
