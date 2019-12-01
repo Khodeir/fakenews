@@ -4,8 +4,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import argparse
-from transformers import (RobertaConfig, RobertaTokenizer)
-from modeling import RobertaForMultiSequenceClassification
+from transformers import (RobertaConfig, RobertaTokenizer, RobertaForSequenceClassification)
 
 from data_providers import (convert_examples_to_features,
                             output_modes, processors, FakeNewsDataset)
@@ -29,7 +28,7 @@ parser.add_argument("--do_lower_case", action='store_true',
 args = parser.parse_args()
 
 MODEL_CLASSES = {
-    'roberta': (RobertaConfig, RobertaForMultiSequenceClassification, RobertaTokenizer),
+    'roberta': (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
 }
 
 # Prepare data
