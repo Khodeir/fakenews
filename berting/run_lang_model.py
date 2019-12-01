@@ -13,28 +13,27 @@ from torch.utils.data.distributed import DistributedSampler
 from tensorboardX import SummaryWriter
 from tqdm import tqdm, trange
 
-from transformers import (WEIGHTS_NAME, BertConfig, BertTokenizer,
-                        RobertaConfig,
-                        RobertaTokenizer,
-                        XLNetConfig,
-                        XLNetForSequenceClassification,
-                        XLNetTokenizer)
+from transformers import (WEIGHTS_NAME, BertConfig,
+                          BertForSequenceClassification, BertTokenizer,
+                          RobertaConfig,
+                          RobertaForSequenceClassification,
+                          RobertaTokenizer,
+                         )
 
 from transformers import AdamW, WarmupLinearSchedule
 
-from modeling import BertForMultiSequenceClassification, RobertaForMultiSequenceClassification
+#from modeling import BertForMultiSequenceClassification, RobertaForMultiSequenceClassification
 
 from data_providers import (compute_metrics, convert_examples_to_features,
                             output_modes, processors, FakeNewsDataset)
 
 logger = logging.getLogger(__name__)
 
-ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, XLNetConfig, RobertaConfig)), ())
+ALL_MODELS = sum((tuple(conf.pretrained_config_archive_map.keys()) for conf in (BertConfig, RobertaConfig)), ())
 
 MODEL_CLASSES = {
-    'bert': (BertConfig, BertForMultiSequenceClassification, BertTokenizer),
-    'xlnet': (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
-    'roberta': (RobertaConfig, RobertaForMultiSequenceClassification, RobertaTokenizer),
+    'bert': (BertConfig, BertForSequenceClassification, BertTokenizer),
+    'roberta': (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
 }
 
 def set_seed(args):
