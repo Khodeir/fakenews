@@ -23,6 +23,8 @@ parser.add_argument("--max_seq_length", default=512, type=int, required=False,
                     help="Max sequence length for inference.")
 parser.add_argument("--model_type", default='roberta', type=str, required=False,
                     help="Model type.")
+parser.add_argument("--do_lower_case", action='store_true',
+                    help="Set this flag if you are using an uncased model.")                   
 
 args = parser.parse_args()
 
@@ -43,13 +45,13 @@ args.model_type = args.model_type.lower()
 config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
 
 config = config_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', num_labels=num_labels, finetuning_task=args.task_name)
-tokenizer = tokenizer_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', do_lower_case=False)
+tokenizer = tokenizer_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', do_lower_case=args.do_lower_case)
 model = model_class.from_pretrained(f'{args.model_dir}/multi_article_roberta', config=config)
 model.eval()
 model = model.to('cuda')
 
 def load_and_cache_examples(args, tokenizer, processor, output_mode, label_list):
-    examples = processor.get_test_examples(args.data_dir)
+    examples = processor.get_test_examples(args.data_dir, args.model_dir)
     features = convert_examples_to_features(examples,
                                             tokenizer,
                                             label_list=label_list,

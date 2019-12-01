@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import logging
 import os
 import sys
@@ -79,18 +80,21 @@ class FakeNewsProcessor(DataProcessor):
         else:
             return claim[:start].strip()
     
-    def get_test_examples(self, data_dir):
-        raise NotImplementedError()
-        '''
-        return []
+    def get_test_examples(self, data_dir, model_dir):
         """Creates test examples for inference."""
         examples = []
         path = os.path.join(data_dir, 'metadata.json')
         df = pd.read_json(path)
+
+        sent_mdl = torch.load(os.path.join(model_dir, 'sentModel'))
+        sent_mdl = sent_mdl.cuda()
+        def cosine(u, v):
+            return np.dot(u, v) / (np.linalg.norm(u) * np.linalg.norm(v))
+        
         for (_, row) in df.iterrows():
             claim = row['claim']
             claimant = row['claimant']
-            date = row['date']
+            # date = row['date']
             claim_id = row['id']
             label = 0 # placeholder
             article_ids = row['related_articles']
@@ -98,22 +102,40 @@ class FakeNewsProcessor(DataProcessor):
             # date_str = date.strftime("%B %d, %Y")
             claim = self.truncate_to_example(claim)
             text_a = claimant + ' : ' + claim
-            text_a = text_a[:500].strip() 
-            articles = []
-            for article_id in article_ids:
+            text_a = text_a[:500].strip()
+
+            # condense begin
+            u = sent_mdl.encode([claim])[0]
+            sentences = []
+            for aid in article_ids:
                 articles_path = os.path.join(
                     data_dir,
-                    f'articles/{article_id}.txt')
+                    f'articles/{aid}.txt')
                 with open(articles_path) as f:
-                    txt = f.read().strip()
-                article_example = ArticleInputExample(
-                    article_id=article_id, text_a=text_a, text_b=txt, label=label)
-                articles.append(article_example)
+                    for line in f:
+                        line = line.strip()
+                        if len(line) > 5:
+                            sentences.append(line[:5000])
+            print(f'len of sents is {len(sentences)}')
+            embeddings = sent_mdl.encode(sentences, bsize=16, tokenize=True, verbose=True)
+            print(embeddings.shape)
 
-            examples.append(
-                InputExample(guid=claim_id, text_a=text_a, articles=articles, label=label))
+            sims = [cosine(u, v) for v in embeddings]
+            
+            if len(sims) > 5:
+                ind = np.argpartition(sims, -5)[-5:]
+            else:
+                ind = list(range(len(sims)))
+
+            condensed_txt = '\n'.join([sentences[idx] for idx in sorted(ind)])
+            torch.cuda.empty_cache()
+            
+            # final step
+            article_example = ArticleInputExample(
+                claim_id=claim_id, text_a=text_a, text_b=condensed_txt, label=label)
+            examples.append(article_example)
+
         return examples
-        '''
 
     def get_labels(self):
         """See base class."""
