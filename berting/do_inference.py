@@ -16,7 +16,7 @@ parser.add_argument("--model_dir", default='/usr/src', type=str, required=False,
                     help="Path to pretrained model.")
 parser.add_argument("--output_file_path", default='/usr/local/predictions.txt', type=str, required=False,
                     help="File path for output file.")
-parser.add_argument("--per_gpu_eval_batch_size", default=1, type=int, required=False,
+parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int, required=False,
                     help="Batch size per GPU/CPU for evaluation.")
 parser.add_argument("--max_seq_length", default=512, type=int, required=False,
                     help="Max sequence length for inference.")

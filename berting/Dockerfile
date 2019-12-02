@@ -138,7 +138,7 @@ RUN apt-get update \
 
 # Copy the current directory contents into the container at /app
 COPY . /usr/src/
-
+RUN python -m nltk.downloader punkt
 
 CMD [ "python3", "/usr/src/do_inference.py" ]
 
