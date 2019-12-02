@@ -3,7 +3,7 @@ python run_lang_model.py \
 --model_type=roberta \
 --model_name_or_path=roberta-large \
 --task_name=fn \
---output_dir=/home/billwuyu_gmail_com/results/rbta_lrg_cdn_glb_3 \
+--output_dir=/home/billwuyu_gmail_com/results/rbta_lrg_cdn_glb_full \
 --max_seq_length=512 \
 --do_train \
 --evaluate_during_training \
@@ -16,7 +16,7 @@ python run_lang_model.py \
 --save_steps=100 \
 --learning_rate=2e-5 \
 --weight_decay=0.1 \
---run_name=runs/rbta_lrg_cdn_glb_3
+--run_name=runs/rbta_lrg_cdn_glb_full
 
 python run_lang_model.py \
 --data_dir=/home/billwuyu_gmail_com/fakenews/data/train \

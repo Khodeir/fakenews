@@ -67,7 +67,7 @@ class FakeNewsProcessor(DataProcessor):
 
     def get_train_examples(self, data_dir):
         """See base class."""
-        return self._create_examples(data_dir, "train_split_v2_dupd.json")
+        return self._create_examples(data_dir, "train_dupd.json")
 
     def get_dev_examples(self, data_dir):
         """See base class."""
@@ -117,8 +117,8 @@ class FakeNewsProcessor(DataProcessor):
                         if len(line) > 5:
                             sentences.append(line[:5000])
             print(f'len of sents is {len(sentences)}')
-            embeddings = sent_mdl.encode(sentences, bsize=32, tokenize=True, verbose=True)
-            print(embeddings.shape)
+            embeddings = sent_mdl.encode(sentences, bsize=32, tokenize=True, verbose=False)
+            #print(embeddings.shape)
 
             sims = [cosine(u, v) for v in embeddings]
             
