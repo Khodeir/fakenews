@@ -15,7 +15,6 @@ python run_lang_model.py \
 --logging_steps=100 \
 --save_steps=100 \
 --learning_rate=2e-5 \
---config_name=/home/billwuyu_gmail_com/results/config.json \
 --weight_decay=0.1 \
 --run_name=runs/rbta_lrg_cdn_glb_3
 
@@ -62,3 +61,9 @@ python do_inference.py \
 --data_dir=/home/billwuyu_gmail_com/dataset \
 --model_dir=/home/billwuyu_gmail_com/docker_submission2 \
 --output_file_path=/home/billwuyu_gmail_com/docker_submission2/predictions.txt \
+
+
+12/02/2019 03:53:49 - INFO - transformers.tokenization_utils -   loading file https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-vocab.json from cache at /home/billwuyu_gmail_com/.cache/torch/transformers/1ae1f5b6e2b22b25ccc04c000bb79ca847aa226d0761536b011cf7e5868f0655.e
+f00af9e673c7160b4d41cfda1f48c5f4cba57d5142754525572a846a1ab1b9b
+12/02/2019 03:53:49 - INFO - transformers.tokenization_utils -   loading file https://s3.amazonaws.com/models.huggingface.co/bert/roberta-large-merges.txt from cache at /home/billwuyu_gmail_com/.cache/torch/transformers/f8f83199a6270d582d6245dc100e99c4155de81c9745c6248077018fe01abcfb.7
+0bec105b4158ed9a1747fea67a43f5dee97855c64d62b6ec3742f4cfdb5feda

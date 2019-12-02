@@ -67,7 +67,7 @@ def train(args, train_dataset, model, tokenizer):
         {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
     ]
     optimizer = AdamW(optimizer_grouped_parameters, lr=args.learning_rate, eps=args.adam_epsilon)
-    scheduler = WarmupLinearSchedule(optimizer, warmup_steps=math.floor(t_total * args.warmup_ratio), t_total=t_total)
+    scheduler = WarmupLinearSchedule(optimizer, warmup_steps=int(math.floor(t_total * args.warmup_ratio)), t_total=t_total)
     if args.fp16:
         try:
             from apex import amp
@@ -353,7 +353,7 @@ def main():
                         help="Total number of training epochs to perform.")
     parser.add_argument("--max_steps", default=-1, type=int,
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
-    parser.add_argument("--warmup_ratio", default=0.06, type=float,
+    parser.add_argument("--warmup_ratio", default=0.0, type=float,
                         help="Linear warmup over warmup_steps.")
 
     parser.add_argument('--logging_steps', type=int, default=50,
