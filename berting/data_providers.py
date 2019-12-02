@@ -117,7 +117,7 @@ class FakeNewsProcessor(DataProcessor):
                         if len(line) > 5:
                             sentences.append(line[:5000])
             print(f'len of sents is {len(sentences)}')
-            embeddings = sent_mdl.encode(sentences, bsize=16, tokenize=True, verbose=True)
+            embeddings = sent_mdl.encode(sentences, bsize=32, tokenize=True, verbose=True)
             print(embeddings.shape)
 
             sims = [cosine(u, v) for v in embeddings]
